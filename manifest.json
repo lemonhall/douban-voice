@@ -1,0 +1,23 @@
+﻿{
+  "name" : "豆瓣Voice",
+  "manifest_version": 2,
+  "version" : "0.1",
+  "description" : "语音豆瓣",
+  "browser_action": {
+      "default_icon": "doubanicon-24.png",
+      "default_title": "语音豆瓣"
+  },
+  "content_scripts" : [
+    {
+      "matches" : [
+        "http://www.douban.com/update/*"
+      ],
+      "js" : ["jquery-1.7.2.min.js","underscore-min.js","update.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    }
+  ],
+    "permissions": [
+        "tabs",	"http://www.douban.com/*","http://api.douban.com/people/*"
+    ]
+}
