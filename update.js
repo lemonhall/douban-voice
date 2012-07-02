@@ -120,6 +120,56 @@ var	getUserName = function(){
 				renderActField();
 			});			
 	},
+	fs_errorHandler=function(e){
+		var msg = '';
+		  switch (e.code) {
+		    case FileError.QUOTA_EXCEEDED_ERR:
+		      msg = 'QUOTA_EXCEEDED_ERR';
+		      break;
+		    case FileError.NOT_FOUND_ERR:
+		      msg = 'NOT_FOUND_ERR';
+		      break;
+		    case FileError.SECURITY_ERR:
+		      msg = 'SECURITY_ERR';
+		      break;
+		    case FileError.INVALID_MODIFICATION_ERR:
+		      msg = 'INVALID_MODIFICATION_ERR';
+		      break;
+		    case FileError.INVALID_STATE_ERR:
+		      msg = 'INVALID_STATE_ERR';
+		      break;
+		    default:
+		      msg = 'Unknown Error';
+		      break;
+		  };
+		  console.log('Error: ' + msg);
+	},
+	save_to_fs=function(blob){
+		var blob=blob;
+		window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+		window.URL = window.URL || window.webkitURL;
+
+		function onInitFs(fs) {
+  			console.log('Opened file system: ' + fs.name);
+			fs.root.getFile('test.mp3', {create: true}, function(fileEntry) {
+		    // Create a FileWriter object for our FileEntry (log.txt).
+		    fileEntry.createWriter(function(fileWriter) {
+		      fileWriter.onwriteend = function(e) {
+		        console.log('Write completed.');
+		        console.log("FILE URL:"+fileEntry.toURL());
+		      };
+		      fileWriter.onerror = function(e) {
+		        console.log('Write failed: ' + e.toString());
+		      };
+		      // Create a new Blob and write it to log.txt.
+		      fileWriter.write(blob);
+
+    		}, fs_errorHandler);//end of createWriter
+  		}, fs_errorHandler);//end of get root
+		}//end of onInitFs
+
+		window.requestFileSystem(window.TEMPORARY, 1024*1024 , onInitFs, fs_errorHandler);
+	},
 	initPlayer=function(){
 		var datatypehash={3043:"推荐单曲",1025:"上传照片",1026:"相册推荐",1013:"推荐小组话题",1018:"我说",1015:"推荐/新日记",1022:"推荐网址",1012:"推荐书评",1002:"看过电影",3049:"读书笔记",1011:"活动兴趣",3065:"东西",1001:"想读/读过",1003:"想听/听过"};
 
@@ -177,9 +227,8 @@ var	getUserName = function(){
 					Statue.uid_url=uid_url;
 			if(Statue.user_quote!=null){
 			  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
-			    console.log("ifPlayer holder?"+ifPlayer);
-
 				if(ifPlayer){
+					console.log("ifPlayer holder?"+ifPlayer);
 					var user_quote_obj=myself.find("div.bd blockquote p");
 					var src=" src='"+test_audio+"' ";
 					var audio_tag="<audio controls "+ 
@@ -188,6 +237,16 @@ var	getUserName = function(){
 									Statue.data_sid+
 									">";
 					user_quote_obj.html(audio_tag);
+					var xhr = new XMLHttpRequest();
+					xhr.responseType = 'blob';
+					xhr.onload = function() {
+					    // xhr.response is a Blob
+					    var url = webkitURL.createObjectURL(xhr.response);
+					    console.log('URL: ', url);
+					    save_to_fs(xhr.response);
+					};
+					xhr.open('GET', test_audio);
+					xhr.send();
 				}
 			}
 			});
