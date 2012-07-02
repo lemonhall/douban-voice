@@ -19,5 +19,9 @@
   ],
     "permissions": [
         "tabs",	"http://www.douban.com/*","http://api.douban.com/people/*"
+    ],
+    "web_accessible_resources": [
+        "ico-voice.gif",
+        "test.mp3"
     ]
 }

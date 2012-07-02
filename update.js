@@ -6,7 +6,7 @@
  
 (function(){
 	var urlParams = {};
-	var debug=1;
+	var debug=2;
 	(function () {
 	    var match,
 	        pl     = /\+/g,  // Regex for replacing addition symbol with a space
@@ -18,23 +18,15 @@
 	       urlParams[decode(match[1])] = decode(match[2]);
 	})();
 
+var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
+var voice_img = chrome.extension.getURL("ico-voice.gif");
+var test_audio = chrome.extension.getURL("test.mp3");
 var	getUserName = function(){
 			if(ifupdate_url){
 				var login_user=$(".pl:last a").attr("href").replace("/people/","").replace("/statuses","");
 				return login_user;
 			}
 		},
-	//如果转到了自己给自己写邮件的页面则
-	//可以插入一个遮罩层，然后让用户察觉不到存储的过程，待搞定后再转回
-	//主界面，然后可以用spin.js来搞定AJAX效果什么的
-	redirecttoDouMail = function(){
-			var username=getUserName();
-				if(debug===1){console.log("username:"+username);}
-				setTimeout(function(){
-					location.href="http://www.douban.com/doumail/write?to="+username+"&savebyme=true";
-				},1000);
-
-	},
 // HTML5 voice record demo
 //http://jsfiddle.net/DerekL/JV996/
 	doRecord=function(){
@@ -59,7 +51,42 @@ var	getUserName = function(){
     });
 	},
 	renderActField=function(){
-		// <div id="isay-act-field">
+		var field="<div class='field'>";
+		var bd="<div class='bd'>";		
+		var cancel_btn="<a href='javascript:void(0);' class='bn-x isay-cancel'>×</a>";
+		var input="<input type='text' id='isay-inp-url'"+ 
+	     		   "value='http://www.baidu.com' class='url' name='url'"+ 
+	     		   "autocomplete='off' goog_input_chext='chext'>";
+		var span_btn="<span class='bn-flat'>"+
+						"<input type='button' value='录音'"+
+						"class='bn-record'></span>";
+		var test="<input type='file' accept='audio/*;capture=microphone'>";
+		var end_div="</div>";
+		var result="<span id='voice-result'></span>";
+		var name="<span id='voice-name'></span>​";
+		var final_html=field+
+						  bd+
+		                    result+
+		                    name+
+		                   // test+
+		                   cancel_btn+
+		                    span_btn+
+		                   end_div+
+		               end_div;
+		$("#isay-act-field").html(final_html);
+		//$("#isay-act-field").show();
+		$("#isay-act-field .field").show();
+		//取消录音
+		$("#isay-act-field .isay-cancel").click(function(){
+				//$("#isay-act-field").hide();
+				$("#isay-act-field .field").hide();
+		});
+		//录音	
+		$("#isay-act-field .bn-record").click(function(){
+				//$("#isay-act-field").hide();
+						doRecord();
+		});	
+				// <div id="isay-act-field">
   // 			<div class="field">
   //   		<div class="bd">
 	 //    		<input type="text" id="isay-inp-url" 
@@ -79,96 +106,60 @@ var	getUserName = function(){
 // <span id="result"></span><br>
 // <button id="video">Record video</button> <button id="sound">Record sound</button><br>
 // <span id="name"></span>​
-		var field="<div class='field'>";
-		var bd="<div class='bd'>";		
-		var cancel_btn="<a href='javascript:void(0);' class='bn-x isay-cancel'>×</a>";
-		var input="<input type='text' id='isay-inp-url'"+ 
-	     		   "value='http://www.baidu.com' class='url' name='url'"+ 
-	     		   "autocomplete='off' goog_input_chext='chext'>";
-		var span_btn="<span class='bn-flat'>"+
-						"<input type='button' value='录音'"+
-						"class='bn-record'></span>";
-		var end_div="</div>";
-		var result="<span id='voice-result'></span>";
-		var name="<span id='voice-name'></span>​";
-		var final_html=field+
-						  bd+
-		                    result+
-		                    name+
-		                   cancel_btn+
-		                    span_btn+
-		                   end_div+
-		               end_div;
-		$("#isay-act-field").html(final_html);
-		//$("#isay-act-field").show();
-		$("#isay-act-field .field").show();
-		//取消录音
-		$("#isay-act-field .isay-cancel").click(function(){
-				//$("#isay-act-field").hide();
-				$("#isay-act-field .field").hide();
-		});
-		//录音	
-		$("#isay-act-field .bn-record").click(function(){
-				//$("#isay-act-field").hide();
-						doRecord();
-		});	
 	},
-	initUpdateView = function (){
-			var topic=$(".ico-topic");
-			topic.after("<a data-action='voice' "+
-						"	style='width: auto;"+
-						"	text-indent: 0;"+
-						"	padding-left: 20px;"+
-						"	background: url(http://img3.douban.com/pics/isay-icos.gif) "+
-						"				no-repeat 0 0;"+
-						"	display: inline-block;"+
-						"	height: 20px;overflow: hidden;"+
-						"	line-height: 20px;"+
-						"	color: #888;"+
-						"	font-family: stheiti,tahoma,simsun,sans-serif;"+
-						"	margin-right: 15px;' "+
-						"	class='ico-voice' "+
-							"title='添加语音'>语音</a>");
+	initVoiceAction=function(){
+		var topic=$(".ico-topic");
+			topic.after("<a class='ico ico-voice' data-action='voice' "+
+						"style='background:"+ 
+						       "url("+voice_img+") "+
+								"no-repeat 0 0;'"+
+					    "title='添加语音'>语音</a>");
 			var voice_btn=$(".ico-voice");
 			voice_btn.bind("click",function(event){
 				console.log("Voice Btn clicked");
 				renderActField();
 			});			
 	},
-	getStatuData = function(objStatu){
+	initPlayer=function(){
+		var datatypehash={3043:"推荐单曲",1025:"上传照片",1026:"相册推荐",1013:"推荐小组话题",1018:"我说",1015:"推荐/新日记",1022:"推荐网址",1012:"推荐书评",1002:"看过电影",3049:"读书笔记",1011:"活动兴趣",3065:"东西",1001:"想读/读过",1003:"想听/听过"};
+
+		var need_save_kind={1026:"相册推荐",1013:"推荐小组话题",1015:"推荐/新日记",1012:"推荐书评",3065:"东西",1025:"推荐相片"}
+
+		$("div.status-item").each(function(){
+			var myself=$(this);
 				//优先判断是否为值得存取的类型
 				//【存入数据库】类型
-				var data_kind=objStatu.attr("data-object-kind");
+				var data_kind=myself.attr("data-object-kind");
 				//【存入数据库】数据行为
-				var data_action=objStatu.attr("data-action");
+				var data_action=myself.attr("data-action");
 					if(debug==1){console.log("Action:"+data_action);}
 			//============================================
 				//打印人性化的提示信息
 				var action=datatypehash[data_kind]===undefined?data_kind:datatypehash[data_kind];
 					if(debug==1){console.log("Kind:"+action);}		
 				//【数据库KEY】SID
-				var data_sid=objStatu.attr("data-sid");
+				var data_sid=myself.attr("data-sid");
 					if(debug==1){console.log("ID:"+data_sid);}
 				//用户地址
-				var user_url=objStatu.find("div.bd p.text a:first").attr("href");
+				var user_url=myself.find("div.bd p.text a:first").attr("href");
 					if(debug==1){console.log("user_url:"+user_url);}		
 				//用户的昵称
-				var user_name=objStatu.find("div.bd p.text a:first").html();
+				var user_name=myself.find("div.bd p.text a:first").html();
 					if(debug==1){console.log("user_name:"+user_name);}
 				//用户的发言
-				var user_quote=objStatu.find("div.bd blockquote p").html();
+				var user_quote=myself.find("div.bd blockquote p").html();
 					if(debug==1){console.log("user_quote:"+user_quote);}
 				//【存入数据库】用户的唯一ID
 				var user_uid=user_url.slice(29,-1);
 					if(debug==1){console.log("user_uid:"+user_uid);}
 				//【存入数据库】行为对象，div.bd p.text下的第二个a连接的href一般来说就是行为
-				var data_object=objStatu.find("div.bd p.text a:eq(1)").attr("href");
+				var data_object=myself.find("div.bd p.text a:eq(1)").attr("href");
 					if(debug==1){console.log("行为对象:"+data_object);}
 				//【存入数据库】行为对象的描述
-				var data_description=objStatu.find("div.bd p.text a:eq(1)").html();
+				var data_description=myself.find("div.bd p.text a:eq(1)").html();
 					if(debug==1){console.log("行为对象:"+data_description);}
 				//【存入数据库？】时间对象？
-				var time=objStatu.find("div.actions span.created_at").attr("title");
+				var time=myself.find("div.actions span.created_at").attr("title");
 					if(debug==1){console.log("Time:"+time);}
 				//生成一个全局对象ID的URL并存入数据库
 				var uid_url=user_url+"status/"+data_sid;
@@ -184,25 +175,29 @@ var	getUserName = function(){
 					Statue.data_description=data_description;
 					Statue.time=time;
 					Statue.uid_url=uid_url;
+			if(Statue.user_quote!=null){
+			  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
+			    console.log("ifPlayer holder?"+ifPlayer);
 
-				return Statue;
-
+				if(ifPlayer){
+					var user_quote_obj=myself.find("div.bd blockquote p");
+					var src=" src='"+test_audio+"' ";
+					var audio_tag="<audio controls "+ 
+									src+
+									"id=audio_"+
+									Statue.data_sid+
+									">";
+					user_quote_obj.html(audio_tag);
+				}
+			}
+			});
 	},
-	addVoiceBtn = function (){
-		//在Action条下运行的，收藏按钮
-		btn_tag_it=$("a.btn-tag-it");
-
-		btn_tag_it.bind("click",function(event){
-				
-				var myself=$(this).parent().parent().parent().parent();
-				var oneStatue=getStatuData(myself);
-					if(debug==1){console.log("用户发言:"+oneStatue.user_quote);}
-				savetoDB(oneStatue);			
-				
-		});//End of 收藏 LocalStorage				
+	initUpdateView = function (){
+			initVoiceAction();
+			initPlayer();
 	},
 	router = function (){
-		if(location.href==='http://www.douban.com/update/'){
+		if(ifupdate_url){
 			initUpdateView();
 		}	
 	}
