@@ -120,7 +120,17 @@ var	getUserName = function(){
 				renderActField();
 			});			
 	},
-	fs_errorHandler=function(e){
+	save_to_fs=function(blob){
+		var blob=blob;
+		var fs_url=undefined;
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+
+		window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
+		window.URL = window.URL || window.webkitURL;
+
+
+		function fs_errorHandler (e){
 		var msg = '';
 		  switch (e.code) {
 		    case FileError.QUOTA_EXCEEDED_ERR:
@@ -143,23 +153,22 @@ var	getUserName = function(){
 		      break;
 		  };
 		  console.log('Error: ' + msg);
-	},
-	save_to_fs=function(blob){
-		var blob=blob;
-		window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
-		window.URL = window.URL || window.webkitURL;
-
+		  deferred.reject(msg);
+		}
 		function onInitFs(fs) {
   			console.log('Opened file system: ' + fs.name);
 			fs.root.getFile('test.mp3', {create: true}, function(fileEntry) {
-		    // Create a FileWriter object for our FileEntry (log.txt).
+		    // Create a FileWriter object for our FileEntry (test.mp3).
 		    fileEntry.createWriter(function(fileWriter) {
+
 		      fileWriter.onwriteend = function(e) {
 		        console.log('Write completed.');
-		        console.log("FILE URL:"+fileEntry.toURL());
+		        var fs_url=fileEntry.toURL();
+		        deferred.resolve(fs_url);
 		      };
 		      fileWriter.onerror = function(e) {
 		        console.log('Write failed: ' + e.toString());
+		        deferred.reject(e.toString());
 		      };
 		      // Create a new Blob and write it to log.txt.
 		      fileWriter.write(blob);
@@ -169,6 +178,69 @@ var	getUserName = function(){
 		}//end of onInitFs
 
 		window.requestFileSystem(window.TEMPORARY, 1024*1024 , onInitFs, fs_errorHandler);
+		
+		return promise;
+	},
+	xhr2=function(options){
+		//xhr2({responseType:'blob',uri:test_audio});
+		// var xhr = new XMLHttpRequest();
+		// 				xhr.responseType = 'blob';
+		// 				xhr.onload = function() {
+		// 				    // xhr.response is a Blob
+		// 				    var url = webkitURL.createObjectURL(xhr.response);
+		// 				    console.log('Blob URL: ', url);
+		// 				    //SOMETHING NEED? A DEFFER???
+		// 				    var fs_url=save_to_fs(xhr.response);
+		// 				    console.log('FS URL: ', fs_url);
+		// 			    	return dfd.promise();
+		// 				};
+		// 				xhr.open('GET', test_audio);
+		// 				xhr.send();
+		var that=this;
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+        var xhr = new XMLHttpRequest(),
+            method = options.method || 'get';
+
+        xhr.responseType = options.responseType ||'blob';   
+
+		xhr.onload = function() {
+			deferred.resolve(xhr);
+		};
+
+        xhr.onerror = function(e) {
+			deferred.reject(xhr, e);
+        }
+    
+        xhr.open(method, options.uri);
+        xhr.send();
+    
+        //xhr.send((options.data) ? urlstringify(options.data) : null);
+
+		return promise;
+	},
+	renderPlayer=function(dom,blob_url){
+		var options={responseType:'blob',uri:blob_url};			
+		xhr2(options).then(function(xhr){
+				var url = webkitURL.createObjectURL(xhr.response);
+				console.log('Blob URL: ', url);
+				console.log("blob success");
+				save_to_fs(xhr.response).then(function(fs_url){
+						console.log('fs URL: ', fs_url);
+						console.log("fs success");
+					var src=" src='"+fs_url+"' ";
+					var audio_tag="<audio autoplay controls "+ 
+									src+
+									//"id=audio_"+
+									//Statue.data_sid+
+									">";
+					dom.html(audio_tag);
+				},function(){
+						console.log("fs error");
+				});
+		}, function(){
+				console.log("error");
+		});	
 	},
 	initPlayer=function(){
 		var datatypehash={3043:"推荐单曲",1025:"上传照片",1026:"相册推荐",1013:"推荐小组话题",1018:"我说",1015:"推荐/新日记",1022:"推荐网址",1012:"推荐书评",1002:"看过电影",3049:"读书笔记",1011:"活动兴趣",3065:"东西",1001:"想读/读过",1003:"想听/听过"};
@@ -225,31 +297,17 @@ var	getUserName = function(){
 					Statue.data_description=data_description;
 					Statue.time=time;
 					Statue.uid_url=uid_url;
+			//to render player? or not
 			if(Statue.user_quote!=null){
 			  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
 				if(ifPlayer){
 					console.log("ifPlayer holder?"+ifPlayer);
 					var user_quote_obj=myself.find("div.bd blockquote p");
-					var src=" src='"+test_audio+"' ";
-					var audio_tag="<audio controls "+ 
-									src+
-									"id=audio_"+
-									Statue.data_sid+
-									">";
-					user_quote_obj.html(audio_tag);
-					var xhr = new XMLHttpRequest();
-					xhr.responseType = 'blob';
-					xhr.onload = function() {
-					    // xhr.response is a Blob
-					    var url = webkitURL.createObjectURL(xhr.response);
-					    console.log('URL: ', url);
-					    save_to_fs(xhr.response);
-					};
-					xhr.open('GET', test_audio);
-					xhr.send();
+					renderPlayer(user_quote_obj,test_audio);			
 				}
-			}
-			});
+			}//end of not user quote null
+		//===========================================
+		});//end of each itor
 	},
 	initUpdateView = function (){
 			initVoiceAction();
