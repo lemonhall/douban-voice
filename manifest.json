@@ -1,11 +1,11 @@
 ﻿{
-  "name" : "豆瓣Voice",
+  "name" : "语音Voice",
   "manifest_version": 2,
   "version" : "0.1",
-  "description" : "语音豆瓣",
+  "description" : "语音Voice",
   "browser_action": {
       "default_icon": "doubanicon-24.png",
-      "default_title": "语音豆瓣"
+      "default_title": "语音Voice"
   },
   "content_scripts" : [
     {
@@ -15,14 +15,43 @@
       "js" : ["jquery-1.7.2.min.js","underscore-min.js","update.js"],
       "run_at" : "document_end",
       "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://t.qq.com/*"
+      ],
+      "js" : ["jquery-1.7.2.min.js","underscore-min.js","tqq.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://weibo.com/*"
+      ],
+      "js" : ["jquery-1.7.2.min.js","underscore-min.js","weibo.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://guide.renren.com/*"
+      ],
+      "js" : ["jquery-1.7.2.min.js","underscore-min.js","renren.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
     }
   ],
     "permissions": [
-        "tabs",	"http://www.douban.com/*","http://api.douban.com/people/*"
+        "tabs",	
+        "http://www.douban.com/*",
+        "http://api.douban.com/people/*",
+        "http://t.qq.com/*",
+        "http://weibo.com/*",
+        "http://guide.renren.com/*"
     ],
     "web_accessible_resources": [
         "ico-voice.gif",
-        "test.mp3",
+        "tqq_voice.png",
         "test.wav"
     ]
 }
