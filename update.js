@@ -43,7 +43,6 @@ var	getUserName = function(){
         	console.log(stream);
         	var output = $(txt).appendTo("#voice-result")[0];
         }
-
         //设置一个倒计时
         $("#voice-result").after("<span id='voice-clock'>14</span>");
         var clock=$('#voice-clock');
@@ -52,6 +51,8 @@ var	getUserName = function(){
         	clock.html(time-1)
         },1000);
         //14秒钟后停止倒计时，并REMOVE钟表元素
+        //todo:可以在14秒后把录音按钮写成重录...另外在录音未完结前，不显示上传按钮
+        //另外考虑一下用户有可能会重复上传时的逻辑
         setTimeout(function(){        	
         	stream.stop();
         	clearInterval(reverse_clock);
@@ -65,6 +66,12 @@ var	getUserName = function(){
     });
 	},
 	//取得相关的文件信息，以及经过BASE64编码后的信息后，上传到服务器
+	//TODO:
+	//1、这里需要考虑的比较多，我决定先使用LOCALSTORAGE来模拟
+	//2、这样同时也可以在本地加入缓存逻辑，如果有，则直接取LOCALSTORAGE，然后渲染就可以
+	//3、重复上传的逻辑？如果两次录音不同，则抹掉，这倒是比较简单....
+	//4、不过这里也出现了一个逻辑上的意味，即，如果上一次录音与这一次录音的HASH值完全相同
+	//	 则可以用这种方式来避免同一条广播被重复提交
 	uploadFile = function (fileInfo,base64) {
 
 	},
