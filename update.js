@@ -50,6 +50,21 @@ var	getUserName = function(){
         err.code == 1 && (alert("You can click the button again anytime to enable."))
     });
 	},
+	renderUploader=function(){
+			var li=$("#voice-name");
+			var p = document.createElement("p");
+        		p.className = "loader";
+        	var pText = document.createTextNode("Uploading...");
+        		p.appendChild(pText);
+        	item.li.appendChild(p);
+        if (item.file.size < 1048576) {
+            uploadFile(item.file, item.li);
+        } else {
+            p.textContent = "File to large";
+            p.style["color"] = "red";
+        }
+
+	},
 	renderActField=function(){
 		var field="<div class='field'>";
 		var bd="<div class='bd'>";		
@@ -234,6 +249,40 @@ var	getUserName = function(){
         //xhr.send((options.data) ? urlstringify(options.data) : null);
 
 		return promise;
+	},
+	uploadFile = function (file, li) {
+    if (li && file) {
+        var xhr = new XMLHttpRequest(),
+            upload = xhr.upload;
+        upload.addEventListener("progress", function (ev) {
+            if (ev.lengthComputable) {
+                var loader = li.getElementsByTagName("div")[0];
+                loader.style["width"] = (ev.loaded / ev.total) * 100 + "%";
+            }
+        }, false);
+        upload.addEventListener("load", function (ev) {
+            var ps = li.getElementsByTagName("p");
+            var div = li.getElementsByTagName("div")[0];
+            div.style["width"] = "100%";
+            div.style["backgroundColor"] = "#0f0";
+            for (var i = 0; i < ps.length; i++) {
+                if (ps[i].className == "loader") {
+                    ps[i].textContent = "Upload complete";
+                    ps[i].style["color"] = "#3DD13F";
+                    break;
+                }
+            }
+        }, false);
+        upload.addEventListener("error", function (ev) {console.log(ev);}, false);
+        xhr.open(
+            "POST",
+            "upload.php"
+        );
+        xhr.setRequestHeader("Cache-Control", "no-cache");
+        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
+        xhr.setRequestHeader("X-File-Name", file.name);
+        xhr.send(file);
+   		 }
 	},
 	renderPlayer=function(dom,blob_url){
 		var options={responseType:'blob',uri:blob_url};			
