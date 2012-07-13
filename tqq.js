@@ -186,35 +186,6 @@ var	getUserName = function(){
 		});	
 				
 	},
-	initVoiceAction=function(){
-		//<a href="javascript:void(0);" tabindex="2" data-action="topic" 
-		//class="ico ico-topic" title="添加话题">话题</a>
-		var topic=$(".ico-topic");
-			topic.after("<a href='javascript:void(0);' tabindex='4'"+
-						"class='ico ico-voice' data-action='voice' "+
-						"style='background:"+ 
-						       "url("+voice_img+") "+
-								"no-repeat 0 0;'"+
-					    "title='添加语音'>语音</a>");
-			var voice_btn=$(".ico-voice");
-
-			voice_btn.bind("click",function(event){
-				console.log("Voice Btn clicked");
-				renderActField();
-			});
-			//对文件上传的两个小HACKS，一个是改变了我说未弹出前的右边距
-			//这是两个HACKS，针对我们加入了自己的按钮后改变了人家原有的流程
-			var file_uploder=$("#isay-upload");
-				file_uploder.css({right: '72px'});
-			//监听BTN-GROUP，如果长度改变了，说明db-isay展开了，加上处理的流程
-			//即将右边距设置成120PX
-			var btn_group=$('.btn-group');
-			btn_group.bind('DOMSubtreeModified', function() {
- 					var file_uploder=$("#isay-upload");
-						file_uploder.css({right: '120px'});
-    		
-			});		
-	},
 	xhr2=function(options){
 		var that=this;
 		var deferred = $.Deferred(); 
