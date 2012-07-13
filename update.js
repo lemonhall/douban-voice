@@ -47,23 +47,74 @@ var	getUserName = function(){
         $("span#voice-name").html("Mic name: <b>" + stream.audioTracks[0].label + "</b>");
     }, function(err) {
         console.log(err);
-        err.code == 1 && (alert("You can click the button again anytime to enable."))
+        err.code == 1 && (alert("可以再次点击录音，直到你想好了为止"))
     });
+	},
+	//取得相关的文件信息，以及经过BASE64编码后的信息后，上传到服务器
+	uploadFile = function (fileInfo,base64) {
+
+	},
+	//用FileReader将任何BLOB对象转换成BASE64编码
+	//loadBlobToBase64(xhr.response).then(function(base64){});
+	loadBlobToBase64=function(blob){
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+
+		var reader = new FileReader();
+		reader.onload = function() {
+			  deferred.resolve(reader.result);
+        }
+       	reader.readAsDataURL(blob);
+       	return promise;
 	},
 	renderUploader=function(){
 			var li=$("#voice-name");
-			var p = document.createElement("p");
-        		p.className = "loader";
-        	var pText = document.createTextNode("Uploading...");
-        		p.appendChild(pText);
-        	item.li.appendChild(p);
-        if (item.file.size < 1048576) {
-            uploadFile(item.file, item.li);
-        } else {
-            p.textContent = "File to large";
-            p.style["color"] = "red";
-        }
+			var p = "<p width='300px' class='loader'></p>";
+			li.after(p);
+		//有两个功能性的BUG
+		//1、第二次点击上传后，会重复加载的问题。。这个得改，换成HTML()方法也许可以
+		//2、识别输入框，加入锚记的功能，另外也许还得搞定字数的问题
+		var options={responseType:'blob',uri:test_audio};
+		xhr2(options).then(function(xhr){
 
+			loadBlobToBase64(xhr.response).then(function(base64){
+				var dom=$('.loader');
+	        		var src=" src='"+base64+"' ";
+					var audio_tag="<audio autoplay controls "+ 
+										src+
+										//"id=audio_"+
+										//Statue.data_sid+
+										">";
+					dom.html(audio_tag);
+			      	//console.log(reader.result);
+			    var text_obj=$('#isay-cont');
+			    var text_label=$('#isay-label');
+			    var label=text_label.html();
+			    if (label==='说点什么吧...') {
+			    //为空的情况下，清空LABLE，并加入自定义字体的标签
+			    	text_label.html('');
+			    	text_obj.text("؆");
+			    }else{
+			    //已经有内容了,则仅仅加入特殊字符标记
+			    	console.log("saying is not null");
+			    	var text=text_obj.text();
+			    	text_obj.text(text+"؆");	
+			    }
+			    console.log("saying is not null?????"+label);label
+
+			    
+			});        		
+				
+		}, function(){
+				console.log("error");
+		});	
+	
+			
+        // if (item.file.size < 1048576) {
+        //     uploadFile(item.file, item.li);
+        // } else {
+        //     p.html("File to large");
+        // }
 	},
 	renderActField=function(){
 		var field="<div class='field'>";
@@ -75,17 +126,20 @@ var	getUserName = function(){
 		var span_btn="<span class='bn-flat'>"+
 						"<input type='button' value='录音'"+
 						"class='bn-record'></span>";
+		var upload_btn="<span class='bn-flat'>"+
+				"<input type='button' value='上传'"+
+				"class='bn-upload'></span>";
 		var test="<input type='file' accept='audio/*;capture=microphone'>";
 		var end_div="</div>";
 		var result="<span id='voice-result'></span>";
-		var name="<span id='voice-name'></span>​";
+		var name="<span id='voice-name'><p><div></div></p></span>​";
 		var final_html=field+
 						  bd+
 		                    result+
 		                    name+
 		                   // test+
 		                   cancel_btn+
-		                    span_btn+
+		                    span_btn+upload_btn+
 		                   end_div+
 		               end_div;
 		$("#isay-act-field").html(final_html);
@@ -100,7 +154,12 @@ var	getUserName = function(){
 		$("#isay-act-field .bn-record").click(function(){
 				//$("#isay-act-field").hide();
 						doRecord();
-		});	
+		});
+		//上传	
+		$("#isay-act-field .bn-upload").click(function(){
+				//$("#isay-act-field").hide();
+						renderUploader();
+		});			
 				// <div id="isay-act-field">
   // 			<div class="field">
   //   		<div class="bd">
@@ -249,40 +308,6 @@ var	getUserName = function(){
         //xhr.send((options.data) ? urlstringify(options.data) : null);
 
 		return promise;
-	},
-	uploadFile = function (file, li) {
-    if (li && file) {
-        var xhr = new XMLHttpRequest(),
-            upload = xhr.upload;
-        upload.addEventListener("progress", function (ev) {
-            if (ev.lengthComputable) {
-                var loader = li.getElementsByTagName("div")[0];
-                loader.style["width"] = (ev.loaded / ev.total) * 100 + "%";
-            }
-        }, false);
-        upload.addEventListener("load", function (ev) {
-            var ps = li.getElementsByTagName("p");
-            var div = li.getElementsByTagName("div")[0];
-            div.style["width"] = "100%";
-            div.style["backgroundColor"] = "#0f0";
-            for (var i = 0; i < ps.length; i++) {
-                if (ps[i].className == "loader") {
-                    ps[i].textContent = "Upload complete";
-                    ps[i].style["color"] = "#3DD13F";
-                    break;
-                }
-            }
-        }, false);
-        upload.addEventListener("error", function (ev) {console.log(ev);}, false);
-        xhr.open(
-            "POST",
-            "upload.php"
-        );
-        xhr.setRequestHeader("Cache-Control", "no-cache");
-        xhr.setRequestHeader("X-Requested-With", "XMLHttpRequest");
-        xhr.setRequestHeader("X-File-Name", file.name);
-        xhr.send(file);
-   		 }
 	},
 	renderPlayer=function(dom,blob_url){
 		var options={responseType:'blob',uri:blob_url};			
