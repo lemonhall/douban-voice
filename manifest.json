@@ -22,6 +22,7 @@
     ],
     "web_accessible_resources": [
         "ico-voice.gif",
-        "test.mp3"
+        "test.mp3",
+        "test.wav"
     ]
 }

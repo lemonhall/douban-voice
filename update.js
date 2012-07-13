@@ -20,15 +20,18 @@
 
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
 var voice_img = chrome.extension.getURL("ico-voice.gif");
-var test_audio = chrome.extension.getURL("test.mp3");
+var test_wav = chrome.extension.getURL("test.wav");
+//这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
+var reverse_clock=null;
 var	getUserName = function(){
 			if(ifupdate_url){
 				var login_user=$(".pl:last a").attr("href").replace("/people/","").replace("/statuses","");
 				return login_user;
 			}
 		},
-// HTML5 voice record demo
-//http://jsfiddle.net/DerekL/JV996/
+	// HTML5 voice record demo
+	//http://jsfiddle.net/DerekL/JV996/
+	//以后可能也需要deffered化这一段代码，返回的无非就是一段BASE64的东西就可以了
 	doRecord=function(){
     var obj = {}, txt="";
         obj = {
@@ -36,6 +39,7 @@ var	getUserName = function(){
             audio: true
         };
         txt = "<audio controls autoplay>";
+    if (reverse_clock===null) {
     navigator.webkitGetUserMedia(obj, function(stream) {
         $("#voice-result").empty();       
         stream.onended=function(){
@@ -46,7 +50,7 @@ var	getUserName = function(){
         //设置一个倒计时
         $("#voice-result").after("<span id='voice-clock'>14</span>");
         var clock=$('#voice-clock');
-        var reverse_clock=setInterval(function(){
+        reverse_clock=setInterval(function(){
         	var time=parseInt(clock.html());
         	clock.html(time-1)
         },1000);
@@ -57,13 +61,14 @@ var	getUserName = function(){
         	stream.stop();
         	clearInterval(reverse_clock);
         	clock.remove();
-        },14000);
-
-        $("span#voice-name").html("Mic name: <b>" + stream.audioTracks[0].label + "</b>");
+        	reverse_clock=null;
+        	$(".bn-upload").show();
+        },2000);
     }, function(err) {
         console.log(err);
         err.code == 1 && (alert("可以再次点击录音，直到你想好了为止"))
     });
+	}//end of if of reverse_clock 
 	},
 	//取得相关的文件信息，以及经过BASE64编码后的信息后，上传到服务器
 	//TODO:
@@ -72,8 +77,18 @@ var	getUserName = function(){
 	//3、重复上传的逻辑？如果两次录音不同，则抹掉，这倒是比较简单....
 	//4、不过这里也出现了一个逻辑上的意味，即，如果上一次录音与这一次录音的HASH值完全相同
 	//	 则可以用这种方式来避免同一条广播被重复提交
-	uploadFile = function (fileInfo,base64) {
-
+	uploadFile = function (id,base64) {
+		var id=id || 'dbVoice_test';
+		var base64File=undefined;
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+		//如果有缓存则首先更新缓存
+		if(localStorage.hasOwnProperty(id)){
+			localStorage[id]=base64;
+			deferred.resolve(true);
+		}
+		//然后需要构造一个XHR2对象并上传
+		return promise;
 	},
 	//用FileReader将任何BLOB对象转换成BASE64编码
 	//loadBlobToBase64(xhr.response).then(function(base64){});
@@ -95,7 +110,7 @@ var	getUserName = function(){
 		//有两个功能性的BUG
 		//1、第二次点击上传后，会重复加载的问题。。这个得改，换成HTML()方法也许可以
 		//2、识别输入框，加入锚记的功能，另外也许还得搞定字数的问题
-		var options={responseType:'blob',uri:test_audio};
+		var options={responseType:'blob',uri:test_wav};
 		xhr2(options).then(function(xhr){
 
 			loadBlobToBase64(xhr.response).then(function(base64){
@@ -121,21 +136,13 @@ var	getUserName = function(){
 			    	var text=text_obj.text();
 			    	text_obj.text(text+"؆");	
 			    }
-			    console.log("saying is not null?????"+label);label
-
-			    
+			    console.log("saying is not null?????"+label);			    
 			});        		
 				
 		}, function(){
 				console.log("error");
-		});	
-	
-			
-        // if (item.file.size < 1048576) {
-        //     uploadFile(item.file, item.li);
-        // } else {
-        //     p.html("File to large");
-        // }
+		});				
+
 	},
 	renderActField=function(){
 		var field="<div class='field'>";
@@ -166,41 +173,21 @@ var	getUserName = function(){
 		$("#isay-act-field").html(final_html);
 		//$("#isay-act-field").show();
 		$("#isay-act-field .field").show();
+		//默认不显示上传
+		$(".bn-upload").hide();
 		//取消录音
 		$("#isay-act-field .isay-cancel").click(function(){
-				//$("#isay-act-field").hide();
 				$("#isay-act-field .field").hide();
 		});
 		//录音	
 		$("#isay-act-field .bn-record").click(function(){
-				//$("#isay-act-field").hide();
 						doRecord();
 		});
 		//上传	
 		$("#isay-act-field .bn-upload").click(function(){
-				//$("#isay-act-field").hide();
 						renderUploader();
-		});			
-				// <div id="isay-act-field">
-  // 			<div class="field">
-  //   		<div class="bd">
-	 //    		<input type="text" id="isay-inp-url" 
-	 //    		value="http://" class="url" name="url" 
-	 //    		autocomplete="off" goog_input_chext="chext">
-
-	 //    		<span class="bn-flat">
-	 //    			<input type="button" value="添加" class="bn-preview">
-	 //    		</span>
-  //   		</div>
-  //   	<a href="javascript:void(0);" class="bn-x isay-cancel">×</a>
-  // 			</div>
-		// </div>
-
-// HTML5 voice record demo
-//http://jsfiddle.net/DerekL/JV996/
-// <span id="result"></span><br>
-// <button id="video">Record video</button> <button id="sound">Record sound</button><br>
-// <span id="name"></span>​
+		});	
+				
 	},
 	initVoiceAction=function(){
 		//<a href="javascript:void(0);" tabindex="2" data-action="topic" 
@@ -231,88 +218,12 @@ var	getUserName = function(){
     		
 			});		
 	},
-	save_to_fs=function(blob){
-		var blob=blob;
-		var fs_url=undefined;
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-
-		window.requestFileSystem  = window.requestFileSystem || window.webkitRequestFileSystem;
-		window.URL = window.URL || window.webkitURL;
-
-
-		function fs_errorHandler (e){
-		var msg = '';
-		  switch (e.code) {
-		    case FileError.QUOTA_EXCEEDED_ERR:
-		      msg = 'QUOTA_EXCEEDED_ERR';
-		      break;
-		    case FileError.NOT_FOUND_ERR:
-		      msg = 'NOT_FOUND_ERR';
-		      break;
-		    case FileError.SECURITY_ERR:
-		      msg = 'SECURITY_ERR';
-		      break;
-		    case FileError.INVALID_MODIFICATION_ERR:
-		      msg = 'INVALID_MODIFICATION_ERR';
-		      break;
-		    case FileError.INVALID_STATE_ERR:
-		      msg = 'INVALID_STATE_ERR';
-		      break;
-		    default:
-		      msg = 'Unknown Error';
-		      break;
-		  };
-		  console.log('Error: ' + msg);
-		  deferred.reject(msg);
-		}
-		function onInitFs(fs) {
-  			console.log('Opened file system: ' + fs.name);
-			fs.root.getFile('test.mp3', {create: true}, function(fileEntry) {
-		    // Create a FileWriter object for our FileEntry (test.mp3).
-		    fileEntry.createWriter(function(fileWriter) {
-
-		      fileWriter.onwriteend = function(e) {
-		        console.log('Write completed.');
-		        var fs_url=fileEntry.toURL();
-		        deferred.resolve(fs_url);
-		      };
-		      fileWriter.onerror = function(e) {
-		        console.log('Write failed: ' + e.toString());
-		        deferred.reject(e.toString());
-		      };
-		      // Create a new Blob and write it to log.txt.
-		      fileWriter.write(blob);
-
-    		}, fs_errorHandler);//end of createWriter
-  		}, fs_errorHandler);//end of get root
-		}//end of onInitFs
-
-		window.requestFileSystem(window.TEMPORARY, 1024*1024 , onInitFs, fs_errorHandler);
-		
-		return promise;
-	},
 	xhr2=function(options){
-		//xhr2({responseType:'blob',uri:test_audio});
-		// var xhr = new XMLHttpRequest();
-		// 				xhr.responseType = 'blob';
-		// 				xhr.onload = function() {
-		// 				    // xhr.response is a Blob
-		// 				    var url = webkitURL.createObjectURL(xhr.response);
-		// 				    console.log('Blob URL: ', url);
-		// 				    //SOMETHING NEED? A DEFFER???
-		// 				    var fs_url=save_to_fs(xhr.response);
-		// 				    console.log('FS URL: ', fs_url);
-		// 			    	return dfd.promise();
-		// 				};
-		// 				xhr.open('GET', test_audio);
-		// 				xhr.send();
 		var that=this;
 		var deferred = $.Deferred(); 
 		var promise = deferred.promise();
         var xhr = new XMLHttpRequest(),
             method = options.method || 'get';
-
         xhr.responseType = options.responseType ||'blob';   
 
 		xhr.onload = function() {
@@ -330,28 +241,44 @@ var	getUserName = function(){
 
 		return promise;
 	},
-	renderPlayer=function(dom,blob_url){
-		var options={responseType:'blob',uri:blob_url};			
-		xhr2(options).then(function(xhr){
-				var url = webkitURL.createObjectURL(xhr.response);
-				console.log('Blob URL: ', url);
-				console.log("blob success");
-				save_to_fs(xhr.response).then(function(fs_url){
-						console.log('fs URL: ', fs_url);
-						console.log("fs success");
-					var src=" src='"+fs_url+"' ";
-					var audio_tag="<audio autoplay controls "+ 
-									src+
-									//"id=audio_"+
-									//Statue.data_sid+
-									">";
-					dom.html(audio_tag);
-				},function(){
-						console.log("fs error");
+	//有则读缓存，无则取数据并存入当地
+	//以后可以把这里的逻辑用WEBSQL来搞定，毕竟可以无限使用空间
+	getFile=function(id){
+		var id=id || 'dbVoice_test';
+		var base64File=undefined;
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+
+		if(localStorage.hasOwnProperty(id)){
+			base64File=localStorage[id];
+			deferred.resolve(base64File);
+		}else{
+			var options=undefined;
+			//for debug			
+			if (id==='dbVoice_test') {
+				options={responseType:'blob',uri:test_wav};
+			}else{
+				//以后的URI就可以取实际的远程地址了
+				options={responseType:'blob',uri:test_wav};
+			}
+			xhr2(options).then(function(xhr){
+				loadBlobToBase64(xhr.response).then(function(base64){
+					localStorage.setItem(id, base64);
+					base64File=base64;
+					deferred.resolve(base64File);
 				});
-		}, function(){
-				console.log("error");
-		});	
+			});
+		}
+		return promise;
+	},
+	renderPlayer=function(dom,base64File){
+			var src=" src='"+base64File+"' ";
+			var audio_tag="<audio autoplay controls "+ 
+							src+
+							//"id=audio_"+
+							//Statue.data_sid+
+							">";
+			dom.html(audio_tag);
 	},
 	initPlayer=function(){
 		var datatypehash={3043:"推荐单曲",1025:"上传照片",1026:"相册推荐",1013:"推荐小组话题",1018:"我说",1015:"推荐/新日记",1022:"推荐网址",1012:"推荐书评",1002:"看过电影",3049:"读书笔记",1011:"活动兴趣",3065:"东西",1001:"想读/读过",1003:"想听/听过"};
@@ -414,7 +341,9 @@ var	getUserName = function(){
 				if(ifPlayer){
 					console.log("ifPlayer holder?"+ifPlayer);
 					var user_quote_obj=myself.find("div.bd blockquote p");
-					renderPlayer(user_quote_obj,test_audio);			
+					getFile().then(function(base64File){
+						renderPlayer(user_quote_obj,base64File);
+					});						
 				}
 			}//end of not user quote null
 		//===========================================
