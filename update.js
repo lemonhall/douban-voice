@@ -37,13 +37,27 @@ var	getUserName = function(){
         };
         txt = "<audio controls autoplay>";
     navigator.webkitGetUserMedia(obj, function(stream) {
-        $("#voice-result").empty();
-        var output = $(txt).appendTo("#voice-result")[0],
-            source = window.webkitURL.createObjectURL(stream);
-        output.autoplay = true;
-        output.src = source;
-        console.log(stream);
-        window.a = stream; //debug
+        $("#voice-result").empty();       
+        stream.onended=function(){
+        	console.log("Hi...I am end");
+        	console.log(stream);
+        	var output = $(txt).appendTo("#voice-result")[0];
+        }
+
+        //设置一个倒计时
+        $("#voice-result").after("<span id='voice-clock'>14</span>");
+        var clock=$('#voice-clock');
+        var reverse_clock=setInterval(function(){
+        	var time=parseInt(clock.html());
+        	clock.html(time-1)
+        },1000);
+        //14秒钟后停止倒计时，并REMOVE钟表元素
+        setTimeout(function(){        	
+        	stream.stop();
+        	clearInterval(reverse_clock);
+        	clock.remove();
+        },14000);
+
         $("span#voice-name").html("Mic name: <b>" + stream.audioTracks[0].label + "</b>");
     }, function(err) {
         console.log(err);
