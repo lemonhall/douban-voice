@@ -23,16 +23,7 @@ var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;
-var	getUserName = function(){
-			if(ifupdate_url){
-				var login_user=$(".pl:last a").attr("href").replace("/people/","").replace("/statuses","");
-				return login_user;
-			}
-		},
-	// HTML5 voice record demo
-	//http://jsfiddle.net/DerekL/JV996/
-	//以后可能也需要deffered化这一段代码，返回的无非就是一段BASE64的东西就可以了
-	doRecord=function(){
+var	doRecord=function(){
     var obj = {}, txt="";
         obj = {
             video: false,
