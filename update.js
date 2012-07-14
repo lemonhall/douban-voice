@@ -547,13 +547,31 @@ var	getUserName = function(){
 			});
 		});
 	},
+	//从文件最后四位得到该图像文件的大小信息
+	//EXAMPLE:
+	// var size=getHideFileSizeMeta(new_TypedArray.buffer.byteLength-4,new_TypedArray.buffer);		
+	// console.log(size);
+	getHideFileSizeMeta=function(offset,arrayBuffer){
+		var dataview = new DataView(arrayBuffer);	
+		var img_length= dataview.getUint32(offset);
+		return img_length;
+	},
+	setHideFileSizeMeta=function(offset,arrayBuffer,size){
+		var dataview = new DataView(arrayBuffer);
+			dataview.setUint32(offset,size); 
+	}
 	//http://stackoverflow.com/questions/10786128/appending-arraybuffers
 	//将两个buffer合并的函数
-	appendBuffer=function ( buffer1, buffer2 ) {
-  		var tmp = new Uint8Array( buffer1.byteLength + buffer2.byteLength );
+	appendBuffer_and_fileSizeMeta=function ( buffer1, buffer2 ) {
+  		var tmp = new Uint8Array( buffer1.byteLength + buffer2.byteLength + 4);
   			tmp.set( new Uint8Array( buffer1 ), 0 );
   			tmp.set( new Uint8Array( buffer2 ), buffer1.byteLength );
-  		return tmp.buffer;
+  			//将图像文件的大小，即偏移量信息，写入最后四位，这样以后就可以方便解析
+  			var offset=buffer1.byteLength + buffer2.byteLength,
+  				imgSize=buffer1.byteLength;
+  				setHideFileSizeMeta(offset,tmp.buffer,imgSize);
+		//返回一个Typed Array，而不是一个ArrayBuffer
+  		return tmp;
 	},
 	//简单替换字符串得到实际的RAW地址
 	getRawUrl=function(smallUrl){
@@ -565,6 +583,16 @@ var	getUserName = function(){
 		//console.log(new_url);	
 		return new_url;
 	},
+	renderImg=function(dom,base64File){
+		var src=" src='"+base64File+"' ";
+			var img_tag="<img "+ 
+							src+
+							//"id=audio_"+
+							//Statue.data_sid+
+							">";
+			dom.html(img_tag);
+
+	},
 	router = function (){
 		if(ifupdate_url){
 			initUpdateView();
@@ -572,31 +600,21 @@ var	getUserName = function(){
 			var rawImg=getRawUrl("http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg");
 			console.log(rawImg);
 
-			getArrayBuffer(test_wav).then(function(wav_buffer){
-				getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png").then(function(img_buffer){
-						//记录一下图像的大小以供SLICE
-						var start=img_buffer.response.byteLength;
-						var new_buffer=appendBuffer(img_buffer.response,wav_buffer.response);
-						var end=new_buffer.byteLength;
-						console.log(img_buffer.response);
-						console.log(wav_buffer.response);
-						console.log(new_buffer);
-				//接下来你就可以上传这个BUFFER到服务器了
-				//不过似乎还有一些问题。。。得到之后怎么把WAV还原出来？
-				//估计得用SLICE...函数...实验一下咯
-				//EXAPLE:http://www.html5rocks.com/en/tutorials/file/xhr2/
-				var wavFileInArray=new_buffer.slice(start,end);
-				console.log(wavFileInArray);
-				//http://www.nczonline.net/blog/2012/06/05/working-with-files-in-javascript-part-5-blobs/
-				//以后会换用新的API
-				var blobBuilder=new WebKitBlobBuilder();
-				blobBuilder.append(wavFileInArray);
-				var blob = blobBuilder.getBlob("audio/wav");
-				loadBlobToBase64(blob).then(function(base64){
-						console.log(base64);
-				});
-				
+	getArrayBuffer(test_wav).then(function(wav_buffer){
+		getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png").then(function(img_buffer){
+				//记录一下图像的大小以供SLICE
+				var start=img_buffer.response.byteLength;
+				var new_TypedArray=appendBuffer_and_fileSizeMeta(img_buffer.response,wav_buffer.response);
+				var end=new_TypedArray.buffer.byteLength;
 
+			var size=getHideFileSizeMeta(new_TypedArray.buffer.byteLength-4,new_TypedArray.buffer);		
+				console.log(size);
+
+			//原来如此，Blob的入口参数是一个被[]起来的ArrayBuffer的数组就可以了
+			var blob = new Blob([new_TypedArray.buffer], { type: "image/png" });
+			var url = window.webkitURL.createObjectURL(blob);
+			var h1=$("h1:first");
+				renderImg(h1,url);
 					
 				});
 			});
