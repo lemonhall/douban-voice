@@ -587,6 +587,8 @@ var	getUserName = function(){
 				//EXAPLE:http://www.html5rocks.com/en/tutorials/file/xhr2/
 				var wavFileInArray=new_buffer.slice(start,end);
 				console.log(wavFileInArray);
+				//http://www.nczonline.net/blog/2012/06/05/working-with-files-in-javascript-part-5-blobs/
+				//以后会换用新的API
 				var blobBuilder=new WebKitBlobBuilder();
 				blobBuilder.append(wavFileInArray);
 				var blob = blobBuilder.getBlob("audio/wav");
