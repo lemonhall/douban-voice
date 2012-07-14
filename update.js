@@ -547,6 +547,14 @@ var	getUserName = function(){
 			});
 		});
 	},
+	//http://stackoverflow.com/questions/10786128/appending-arraybuffers
+	//将两个buffer合并的函数
+	appendBuffer=function ( buffer1, buffer2 ) {
+  		var tmp = new Uint8Array( buffer1.byteLength + buffer2.byteLength );
+  			tmp.set( new Uint8Array( buffer1 ), 0 );
+  			tmp.set( new Uint8Array( buffer2 ), buffer1.byteLength );
+  		return tmp.buffer;
+	},
 	//简单替换字符串得到实际的RAW地址
 	getRawUrl=function(smallUrl){
 			// INPUT:var img_url="http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg"
@@ -563,6 +571,33 @@ var	getUserName = function(){
 			//upload_xhr2();
 			var rawImg=getRawUrl("http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg");
 			console.log(rawImg);
+
+			getArrayBuffer(test_wav).then(function(wav_buffer){
+				getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png").then(function(img_buffer){
+						//记录一下图像的大小以供SLICE
+						var start=img_buffer.response.byteLength;
+						var new_buffer=appendBuffer(img_buffer.response,wav_buffer.response);
+						var end=new_buffer.byteLength;
+						console.log(img_buffer.response);
+						console.log(wav_buffer.response);
+						console.log(new_buffer);
+				//接下来你就可以上传这个BUFFER到服务器了
+				//不过似乎还有一些问题。。。得到之后怎么把WAV还原出来？
+				//估计得用SLICE...函数...实验一下咯
+				//EXAPLE:http://www.html5rocks.com/en/tutorials/file/xhr2/
+				var wavFileInArray=new_buffer.slice(start,end);
+				console.log(wavFileInArray);
+				var blobBuilder=new WebKitBlobBuilder();
+				blobBuilder.append(wavFileInArray);
+				var blob = blobBuilder.getBlob("audio/wav");
+				loadBlobToBase64(blob).then(function(base64){
+						console.log(base64);
+				});
+				
+
+					
+				});
+			});
 
 		}	
 	}
