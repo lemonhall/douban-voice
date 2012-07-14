@@ -19,7 +19,7 @@
 	})();
 
 var ifupdate_url=location.href.slice(0,15)=="http://t.qq.com";
-var voice_img = chrome.extension.getURL("tqq_voice.png");
+var voice_img = chrome.extension.getURL("images/tqq_voice.png");
 var test_wav = chrome.extension.getURL("test.wav");
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;

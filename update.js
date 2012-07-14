@@ -19,8 +19,24 @@
 	})();
 
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
-var voice_img = chrome.extension.getURL("ico-voice.gif");
+var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
+var svg_font = chrome.extension.getURL("voice_font.svg");
+var font_face="<style type='text/css'>"+
+				"@font-face {"+
+			    "font-family: 'Comfortaa Regular';"+
+			    "src: local('Comfortaa Regular'), "+
+			    "     local('Comfortaa'), "+
+			    "    url('"+svg_font+"') format('svg'); "+
+			"}"+
+			"#test {"+
+			 "   font-family: 'Comfortaa Regular', Helvetica, Arial, sans-serif;"+
+			"}"+
+		"</style>";
+var style=$("style:first");
+	style.after(font_face);
+var h1=$("h1:first");
+	h1.after("<span id='test'>!!!!!!!</span>");
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;
 var	getUserName = function(){

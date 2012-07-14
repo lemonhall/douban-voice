@@ -19,7 +19,7 @@
 	})();
 
 var ifupdate_url=location.href.slice(0,23)=="http://guide.renren.com";
-var voice_img = chrome.extension.getURL("ico-voice.gif");
+var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
 console.log(location.href.slice(0,23));
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西

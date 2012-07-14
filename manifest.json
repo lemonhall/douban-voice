@@ -50,8 +50,9 @@
         "http://guide.renren.com/*"
     ],
     "web_accessible_resources": [
-        "ico-voice.gif",
-        "tqq_voice.png",
-        "test.wav"
+        "images/ico-voice.gif",
+        "images/tqq_voice.png",
+        "test.wav",
+        "voice_font.svg"
     ]
 }
