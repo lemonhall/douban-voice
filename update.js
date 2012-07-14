@@ -143,26 +143,6 @@ var	getUserName = function(){
     });
 	}//end of if of reverse_clock 
 	},
-	//取得相关的文件信息，以及经过BASE64编码后的信息后，上传到服务器
-	//TODO:
-	//1、这里需要考虑的比较多，我决定先使用LOCALSTORAGE来模拟
-	//2、这样同时也可以在本地加入缓存逻辑，如果有，则直接取LOCALSTORAGE，然后渲染就可以
-	//3、重复上传的逻辑？如果两次录音不同，则抹掉，这倒是比较简单....
-	//4、不过这里也出现了一个逻辑上的意味，即，如果上一次录音与这一次录音的HASH值完全相同
-	//	 则可以用这种方式来避免同一条广播被重复提交
-	uploadFile = function (id,base64) {
-		var id=id || 'dbVoice_test';
-		var base64File=undefined;
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-		//如果有缓存则首先更新缓存
-		if(localStorage.hasOwnProperty(id)){
-			localStorage[id]=base64;
-			deferred.resolve(true);
-		}
-		//然后需要构造一个XHR2对象并上传
-		return promise;
-	},
 	//用FileReader将任何BLOB对象转换成BASE64编码
 	//loadBlobToBase64(xhr.response).then(function(base64){});
 	loadBlobToBase64=function(blob){
@@ -322,7 +302,7 @@ var	getUserName = function(){
 							//"id=audio_"+
 							//Statue.data_sid+
 							">";
-			dom.html(audio_tag);
+			dom.after(audio_tag);
 	},
 	// Example:
 	// getFileFromNote().then(function(xhr){
@@ -451,6 +431,7 @@ var	getUserName = function(){
     		
 			});		
 	},
+	//理应被废止的函数，准备移除
 	renderUploadIframe=function(dom){
 		//http://www.douban.com/note/create
 		var src="'http://www.douban.com/note/create'";
@@ -499,6 +480,152 @@ var	getUserName = function(){
 	    xhr.send();
 	    return promise;
 	},
+	//送入一个文件URL，得到串列，上传至豆瓣的POST接口，得到返回的值
+	//然后对返回值进行计算，得到RAW DATA的图像地址
+	//调用了getArrayBuffer以及uploadImg
+	upload_xhr2=function(){
+		getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png")
+		.then(function(xhr){
+			//arrayBuffer
+			uploadImg(xhr.response).then(function(xhr){
+				var img=JSON.parse(xhr.responseText);
+				//console.log(img);
+				//http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg
+				//img.url
+				var rawImg=getRawUrl(img.url);
+			});
+		});
+	},
+	//从文件最后四位得到该图像文件的大小信息
+	//EXAMPLE:
+	// var size=getHideFileSizeMeta(new_TypedArray.buffer.byteLength-4,new_TypedArray.buffer);		
+	// console.log(size);
+	getHideFileSizeMeta=function(offset,arrayBuffer){
+		var dataview = new DataView(arrayBuffer);	
+		var img_length= dataview.getUint32(offset);
+		return img_length;
+	},
+	setHideFileSizeMeta=function(offset,arrayBuffer,size){
+		var dataview = new DataView(arrayBuffer);
+			dataview.setUint32(offset,size); 
+	}
+	//http://stackoverflow.com/questions/10786128/appending-arraybuffers
+	//将两个buffer合并的函数
+	//EXAMPLE:
+	// getArrayBuffer(test_wav).then(function(wav_buffer){
+	// 	getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png").then(function(img_buffer){
+	// 		//记录一下图像的大小以供SLICE
+	// 		var new_TypedArray=appendBuffer_and_fileSizeMeta(img_buffer.response,wav_buffer.response);
+	appendBuffer_and_fileSizeMeta=function ( buffer1, buffer2 ) {
+  		var tmp = new Uint8Array( buffer1.byteLength + buffer2.byteLength + 4);
+  			tmp.set( new Uint8Array( buffer1 ), 0 );
+  			tmp.set( new Uint8Array( buffer2 ), buffer1.byteLength );
+  			//将图像文件的大小，即偏移量信息，写入最后四位，这样以后就可以方便解析
+  			var offset=buffer1.byteLength + buffer2.byteLength,
+  				imgSize=buffer1.byteLength;
+  				setHideFileSizeMeta(offset,tmp.buffer,imgSize);
+		//返回一个Typed Array，而不是一个ArrayBuffer
+  		return tmp;
+	},
+	//简单替换字符串得到实际的RAW地址
+	//EXAMPLE:
+	// var rawImg=getRawUrl("http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg");
+	// 		console.log(rawImg);
+	getRawUrl=function(smallUrl){
+		//TODO:consider img1???
+		var img_url=smallUrl;
+		var new_url=img_url.replace('http://img3.douban.com/view/status/small/public/','http://img3.douban.com/view/status/raw/public/');
+		return new_url;
+	},
+	//EXAMPLE:
+	//原来如此，Blob的入口参数是一个被[]起来的ArrayBuffer的数组就可以了
+	// var blob = new Blob([new_TypedArray.buffer], { type: "image/png" });
+	// var url = window.webkitURL.createObjectURL(blob);
+	// var h1=$("h1:first");
+	// 	renderImg(h1,url);
+	renderImg=function(dom,base64File){
+		var src=" src='"+base64File+"' ";
+			var img_tag="<img "+ 
+							src+
+							//"id=audio_"+
+							//Statue.data_sid+
+							">";
+			dom.after(img_tag);
+
+	},
+	//Return a buffer object
+	//EXAMPLE:
+	// var wav_blob=new Blob([splitWavFromImage(new_TypedArray.buffer)],{type:"audio/wav"});
+	// var wav_url=window.webkitURL.createObjectURL(wav_blob);
+	// 			renderPlayer(h1,wav_url);
+	splitWavFromImage=function(arraybuffer){
+		var size=getHideFileSizeMeta(arraybuffer.byteLength-4,arraybuffer);
+		var wav_buffer=	arraybuffer.slice(size,arraybuffer.byteLength-4);
+		return wav_buffer;
+	},
+	//异步得将两种数据柔和在一起，并返回
+	//
+	//EXAMPLE:
+	// hideDataIntoImage().then(function(new_buffer){
+	// 		//原来如此，Blob的入口参数是一个被[]起来的ArrayBuffer的数组就可以了
+	// 		var blob = new Blob([new_buffer], { type: "image/png" });
+	// 		var url = window.webkitURL.createObjectURL(blob);
+	// 		var h1=$("h1:first");
+	// 			renderImg(h1,url);
+	// 		var wav_blob=new Blob([splitWavFromImage(new_buffer)],{type:"audio/wav"});
+	// 		var wav_url=window.webkitURL.createObjectURL(wav_blob);
+	// 			renderPlayer(h1,wav_url);
+	// 	});
+	hideDataIntoImage=function(){
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+
+		getArrayBuffer(test_wav).then(function(wav_buffer){
+			getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png").then(function(img_buffer){
+				var new_TypedArray=appendBuffer_and_fileSizeMeta(img_buffer.response,wav_buffer.response);
+				deferred.resolve(new_TypedArray.buffer);
+
+			});
+		});
+		return promise;
+	},
+	//hideDataIntoImage的测试？或者说是EXAMPLE都可以
+	testDataHided=function(){
+		hideDataIntoImage().then(function(new_buffer){
+			//原来如此，Blob的入口参数是一个被[]起来的ArrayBuffer的数组就可以了
+			var blob = new Blob([new_buffer], { type: "image/png" });
+			var url = window.webkitURL.createObjectURL(blob);
+			var h1=$("h1:first");
+				renderImg(h1,url);
+			var wav_blob=new Blob([splitWavFromImage(new_buffer)],{type:"audio/wav"});
+			var wav_url=window.webkitURL.createObjectURL(wav_blob);
+				renderPlayer(h1,wav_url);
+		});
+	},
+	//依靠图像来走上传之路的原型，主要就是个流程
+	uploadToImgServer=function(){
+		//混合已知数据
+		hideDataIntoImage().then(function(new_buffer){
+			//将混合数据上传到服务器
+			uploadImg(new_buffer).then(function(xhr){
+					var img=JSON.parse(xhr.responseText);
+					var rawImg=getRawUrl(img.url);
+				});
+
+		});
+		//分解出WAV数据，并存入LOCAL_STORAGE，或者WEBSQL，成为缓存数据
+	},
+	//依靠日记来保存数据的原型
+	uploadToNoteServer=function(){
+		//将WAV数据存入LOCAL_STORAGE，或者WEBSQL，成为缓存数据
+		//redirectTo createNote.js
+	},
+	//依靠自己的服务器来保存数据的原型
+	uploadToSinaServer=function(){
+		//将WAV数据存入LOCAL_STORAGE，或者WEBSQL，成为缓存数据
+		//xhr2到新浪的特定服务上，POST一段BASE64过的数据即可
+		//关键是缓存以及，防止重复提交的逻辑要写好
+	},
 	//上传至豆瓣，使用了自定义的方式来组建FORM。。。
 	//
 	uploadImg=function (arrayBuffer) {
@@ -531,94 +658,29 @@ var	getUserName = function(){
 	    //http://img3.douban.com/view/status/small/public/2e9e707ab7aee90.jpg
 	    //http://img3.douban.com/view/status/raw/public/2e9e707ab7aee90.jpg
 	},
-	//送入一个文件URL，得到串列，上传至豆瓣的POST接口，得到返回的值
-	//然后对返回值进行计算，得到RAW DATA的图像地址
-	//调用了getArrayBuffer以及uploadImg
-	upload_xhr2=function(){
-		getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png")
-		.then(function(xhr){
-			//arrayBuffer
-			uploadImg(xhr.response).then(function(xhr){
-				var img=JSON.parse(xhr.responseText);
-				//console.log(img);
-				//http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg
-				//img.url
-				var rawImg=getRawUrl(img.url);
-			});
-		});
-	},
-	//从文件最后四位得到该图像文件的大小信息
-	//EXAMPLE:
-	// var size=getHideFileSizeMeta(new_TypedArray.buffer.byteLength-4,new_TypedArray.buffer);		
-	// console.log(size);
-	getHideFileSizeMeta=function(offset,arrayBuffer){
-		var dataview = new DataView(arrayBuffer);	
-		var img_length= dataview.getUint32(offset);
-		return img_length;
-	},
-	setHideFileSizeMeta=function(offset,arrayBuffer,size){
-		var dataview = new DataView(arrayBuffer);
-			dataview.setUint32(offset,size); 
-	}
-	//http://stackoverflow.com/questions/10786128/appending-arraybuffers
-	//将两个buffer合并的函数
-	appendBuffer_and_fileSizeMeta=function ( buffer1, buffer2 ) {
-  		var tmp = new Uint8Array( buffer1.byteLength + buffer2.byteLength + 4);
-  			tmp.set( new Uint8Array( buffer1 ), 0 );
-  			tmp.set( new Uint8Array( buffer2 ), buffer1.byteLength );
-  			//将图像文件的大小，即偏移量信息，写入最后四位，这样以后就可以方便解析
-  			var offset=buffer1.byteLength + buffer2.byteLength,
-  				imgSize=buffer1.byteLength;
-  				setHideFileSizeMeta(offset,tmp.buffer,imgSize);
-		//返回一个Typed Array，而不是一个ArrayBuffer
-  		return tmp;
-	},
-	//简单替换字符串得到实际的RAW地址
-	getRawUrl=function(smallUrl){
-			// INPUT:var img_url="http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg"
-			// OUTPUT:var raw_url="http://img3.douban.com/view/status/raw/public/39bf2861338e7cc.jpg";
-		//TODO:consider img1???
-		var img_url=smallUrl;
-		var new_url=img_url.replace('http://img3.douban.com/view/status/small/public/','http://img3.douban.com/view/status/raw/public/');
-		//console.log(new_url);	
-		return new_url;
-	},
-	renderImg=function(dom,base64File){
-		var src=" src='"+base64File+"' ";
-			var img_tag="<img "+ 
-							src+
-							//"id=audio_"+
-							//Statue.data_sid+
-							">";
-			dom.html(img_tag);
-
+	//取得相关的文件信息，以及经过BASE64编码后的信息后，上传到服务器
+	//TODO:
+	//1、这里需要考虑的比较多，我决定先使用LOCALSTORAGE来模拟
+	//2、这样同时也可以在本地加入缓存逻辑，如果有，则直接取LOCALSTORAGE，然后渲染就可以
+	//3、重复上传的逻辑？如果两次录音不同，则抹掉，这倒是比较简单....
+	//4、不过这里也出现了一个逻辑上的意味，即，如果上一次录音与这一次录音的HASH值完全相同
+	//	 则可以用这种方式来避免同一条广播被重复提交
+	uploadFile = function (id,base64) {
+		var id=id || 'dbVoice_test';
+		var base64File=undefined;
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+		//如果有缓存则首先更新缓存
+		if(localStorage.hasOwnProperty(id)){
+			localStorage[id]=base64;
+			deferred.resolve(true);
+		}
+		//然后需要构造一个XHR2对象并上传
+		return promise;
 	},
 	router = function (){
 		if(ifupdate_url){
 			initUpdateView();
-			//upload_xhr2();
-			var rawImg=getRawUrl("http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg");
-			console.log(rawImg);
-
-	getArrayBuffer(test_wav).then(function(wav_buffer){
-		getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png").then(function(img_buffer){
-				//记录一下图像的大小以供SLICE
-				var start=img_buffer.response.byteLength;
-				var new_TypedArray=appendBuffer_and_fileSizeMeta(img_buffer.response,wav_buffer.response);
-				var end=new_TypedArray.buffer.byteLength;
-
-			var size=getHideFileSizeMeta(new_TypedArray.buffer.byteLength-4,new_TypedArray.buffer);		
-				console.log(size);
-
-			//原来如此，Blob的入口参数是一个被[]起来的ArrayBuffer的数组就可以了
-			var blob = new Blob([new_TypedArray.buffer], { type: "image/png" });
-			var url = window.webkitURL.createObjectURL(blob);
-			var h1=$("h1:first");
-				renderImg(h1,url);
-					
-				});
-			});
-
 		}	
 	}
 	router();
