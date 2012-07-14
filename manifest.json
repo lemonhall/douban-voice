@@ -39,6 +39,14 @@
       "js" : ["jquery-1.7.2.min.js","underscore-min.js","renren.js"],
       "run_at" : "document_end",
       "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://www.douban.com/note/*"
+      ],
+      "js" : ["jquery-1.7.2.min.js","underscore-min.js","createNote.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
     }
   ],
     "permissions": [

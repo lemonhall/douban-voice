@@ -3,7 +3,7 @@
  * source code is governed by a BSD-style license that can be found in the
  * LICENSE file.
  */
- 
+importScripts('xhr2-FormData.js'); 
 (function(){
 	var urlParams = {};
 	var debug=2;
@@ -23,7 +23,16 @@ var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;
-var	doRecord=function(){
+var	getUserName = function(){
+			if(ifupdate_url){
+				var login_user=$(".pl:last a").attr("href").replace("/people/","").replace("/statuses","");
+				return login_user;
+			}
+		},
+	// HTML5 voice record demo
+	//http://jsfiddle.net/DerekL/JV996/
+	//以后可能也需要deffered化这一段代码，返回的无非就是一段BASE64的东西就可以了
+	doRecord=function(){
     var obj = {}, txt="";
         obj = {
             video: false,
@@ -242,6 +251,35 @@ var	doRecord=function(){
 							">";
 			dom.html(audio_tag);
 	},
+	// Example:
+	// getFileFromNote().then(function(xhr){
+	// 		console.log(xhr.response);
+	// });
+	getFileFromNote=function(){
+		var note='http://www.douban.com/note/225350522/';
+		var options={responseType:'document',uri:note};
+		var that=this;
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+        var xhr = new XMLHttpRequest(),
+            method = options.method || 'get';
+        xhr.responseType = options.responseType ||'document';   
+
+		xhr.onload = function() {
+			deferred.resolve(xhr);
+		};
+
+        xhr.onerror = function(e) {
+			deferred.reject(xhr, e);
+        }
+    
+        xhr.open(method, options.uri);
+        xhr.send();
+    
+        //xhr.send((options.data) ? urlstringify(options.data) : null);
+
+		return promise;
+	},
 	initPlayer=function(){
 		var datatypehash={3043:"推荐单曲",1025:"上传照片",1026:"相册推荐",1013:"推荐小组话题",1018:"我说",1015:"推荐/新日记",1022:"推荐网址",1012:"推荐书评",1002:"看过电影",3049:"读书笔记",1011:"活动兴趣",3065:"东西",1001:"想读/读过",1003:"想听/听过"};
 
@@ -340,16 +378,50 @@ var	doRecord=function(){
     		
 			});		
 	},
+	renderUploadIframe=function(dom){
+		//http://www.douban.com/note/create
+		var src="'http://www.douban.com/note/create'";
+		var iframe="<iframe width='200px' height='200px' "+ 
+							"src="+src+
+							" >";
+			dom.after(iframe);
+
+	},
 	initUpdateView = function (){
 			initVoiceAction();
 			initPlayer();
+			//var user_quote_obj=$("h1:first");
+			//renderUploadIframe(user_quote_obj);
+
+			// getFileFromNote().then(function(xhr){
+			// 		var body=xhr.response;
+			// 		var note = $(".note:eq(1)", body);
+			// 		var audio_src=note.html();
+			// 		var user_quote_obj=$("h1:first");
+			// 		//renderPlayer(user_quote_obj,audio_src);
+			// 		renderUploadIframe(user_quote_obj);
+			// });
+	},
+	upload_xhr2=function(){
+		var xhr = new XMLHttpRequest();
+    	// Using FormData polyfill for Web workers!
+    	var fd = new FormData();
+    	fd.append('server-method', 'upload');
+    	// The native FormData.append method ONLY takes Blobs, Files or strings
+    	// The FormData for Web workers polyfill can also deal with array buffers
+    	fd.append('file', arrayBuffer);
+
+    	xhr.open('POST', 'http://www.douban.com/j/upload', true);
+
+    	// Transmit the form to the server
+    	xhr.send(fd);
 	},
 	router = function (){
 		if(ifupdate_url){
+			var location='';
 			initUpdateView();
 		}	
 	}
-
 	router();
  
 } )();
