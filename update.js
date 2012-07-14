@@ -17,6 +17,65 @@
 	       urlParams[decode(match[1])] = decode(match[2]);
 	})();
 
+	(function() {
+    // Export variable to the global scope
+    (this == undefined ? self : this)['FormData'] = FormData;
+
+    var ___send$rw = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype['send'] = function(data) {
+        if (data instanceof FormData) {
+            if (!data.__endedMultipart) data.__append('--' + data.boundary + '--\r\n');
+            data.__endedMultipart = true;
+            this.setRequestHeader('Content-Type', 'multipart/form-data; boundary=' + data.boundary);
+            data = new Uint8Array(data.data).buffer;
+        }
+        // Invoke original XHR.send
+        return ___send$rw.call(this, data);
+    };
+
+    function FormData() {
+        // Force a Constructor
+        if (!(this instanceof FormData)) return new FormData();
+        // Generate a random boundary - This must be unique with respect to the form's contents.
+        this.boundary = '----WebKitFormBoundary' + Math.random().toString(36);
+        var internal_data = this.data = [];
+        /**
+        * Internal method.
+        * @param inp String | ArrayBuffer | Uint8Array  Input
+        */
+        this.__append = function(inp) {
+            var i=0, len;
+            if (typeof inp === 'string') {
+                for (len=inp.length; i<len; i++)
+                    internal_data.push(inp.charCodeAt(i) & 0xff);
+            } else if (inp && inp.byteLength) {/*If ArrayBuffer or typed array */
+                if (!('byteOffset' in inp))   /* If ArrayBuffer, wrap in view */
+                    inp = new Uint8Array(inp);
+                for (len=inp.byteLength; i<len; i++)
+                    internal_data.push(inp[i] & 0xff);
+            }
+        };
+    }
+    /**
+    * @param name     String                                  Key name
+    * @param value    String|Blob|File|Uint8Array|ArrayBuffer Value
+    * @param filename String                                  Optional File name (when value is not a string).
+    **/
+    FormData.prototype['append'] = function() {
+        // if (this.__endedMultipart) {
+        //     // Truncate the closing boundary
+        //     this.data.length -= this.boundary.length + 6;
+        //     this.__endedMultipart = false;
+        // }
+        var part = '--' + this.boundary + '\r\n' +
+        		   'Content-Disposition: form-data; name=\"ck\"\r\n\r\n'+
+        		   'HwkQ\r\n'+
+        			'--' + this.boundary + '\r\n' + 
+                	'Content-Disposition: form-data; name=\"image\";filename=\"android.png\"\r\nContent-Type: image/png\r\n\r\n';
+        this.__append(part);
+    };
+})();
+
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
 var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
@@ -402,14 +461,37 @@ var	getUserName = function(){
 			// 		renderUploadIframe(user_quote_obj);
 			// });
 	},
+	getArrayBuffer=function(){
+		var resourceUrl = "http://img1.douban.com/pics/nav/lg_main_a10.png";
+	    var xhr = new XMLHttpRequest();
+	    xhr.open('GET', resourceUrl, true);
+
+	    // Response type arraybuffer - XMLHttpRequest 2
+	    xhr.responseType = 'arraybuffer';
+	    xhr.onload = function(e) {
+	        if (xhr.status == 200) {
+	            nextStep(xhr.response);
+	        }
+	    };
+	    xhr.send();
+	},
+	nextStep=function (arrayBuffer) {
+	    var xhr = new XMLHttpRequest();
+	    // Using FormData polyfill for Web workers!
+	    var fd = new FormData();
+	    fd.append('server-method', 'upload');
+
+	    // The native FormData.append method ONLY takes Blobs, Files or strings
+	    // The FormData for Web workers polyfill can also deal with array buffers
+	    fd.append('file', arrayBuffer);
+
+	    xhr.open('POST', 'http://www.douban.com/j/upload', true);
+
+	    // Transmit the form to the server
+	    xhr.send(fd);
+	},
 	upload_xhr2=function(){
-		var options={responseType:'blob',uri:worker_src};
-		xhr2(options).then(function(xhr){
-			var url=window.webkitURL.createObjectURL(xhr.response);
-			console.log(url);
-			var worker = new Worker(url);
-			worker.postMessage("http://img1.douban.com/pics/nav/lg_main_a10.png");	
-		});        
+		getArrayBuffer();
 	},
 	router = function (){
 		if(ifupdate_url){

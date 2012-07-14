@@ -55,7 +55,8 @@
         "http://api.douban.com/people/*",
         "http://t.qq.com/*",
         "http://weibo.com/*",
-        "http://guide.renren.com/*"
+        "http://guide.renren.com/*",
+        "http://img1.douban.com/*"
     ],
     "web_accessible_resources": [
         "images/ico-voice.gif",
