@@ -475,40 +475,95 @@ var	getUserName = function(){
 			// 		renderUploadIframe(user_quote_obj);
 			// });
 	},
-	getArrayBuffer=function(){
-		var resourceUrl = "http://img1.douban.com/pics/nav/lg_main_a10.png";
+	//getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png")
+	//	.then(function(xhr){
+	//得到某个文件的串列
+	getArrayBuffer=function(url){
+		var resourceUrl = url || "http://img1.douban.com/pics/nav/lg_main_a10.png";
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
 	    var xhr = new XMLHttpRequest();
 	    xhr.open('GET', resourceUrl, true);
 
 	    // Response type arraybuffer - XMLHttpRequest 2
 	    xhr.responseType = 'arraybuffer';
+	    xhr.onerror = function(e) {
+			deferred.reject(xhr, e);
+        }
+
 	    xhr.onload = function(e) {
 	        if (xhr.status == 200) {
-	            nextStep(xhr.response);
+	            deferred.resolve(xhr);
 	        }
 	    };
 	    xhr.send();
+	    return promise;
 	},
-	nextStep=function (arrayBuffer) {
+	//上传至豆瓣，使用了自定义的方式来组建FORM。。。
+	//
+	uploadImg=function (arrayBuffer) {
 	    var xhr = new XMLHttpRequest();
+
+	    var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+
 	    // Using FormData polyfill for Web workers!
 	    var fd = new FormData();
 	    // The native FormData.append method ONLY takes Blobs, Files or strings
 	    // The FormData for Web workers polyfill can also deal with array buffers
 	    fd.append('file', arrayBuffer);
-
 	    xhr.open('POST', 'http://www.douban.com/j/upload', true);
+
+	    xhr.onerror = function(e) {
+			deferred.reject(xhr, e);
+        }
+
+	    xhr.onload = function(e) {
+	        if (xhr.status == 200) {
+	            deferred.resolve(xhr);
+	        }
+	    };
 
 	    // Transmit the form to the server
 	    xhr.send(fd);
+
+	    return promise;
+	    //http://img3.douban.com/view/status/small/public/2e9e707ab7aee90.jpg
+	    //http://img3.douban.com/view/status/raw/public/2e9e707ab7aee90.jpg
 	},
+	//送入一个文件URL，得到串列，上传至豆瓣的POST接口，得到返回的值
+	//然后对返回值进行计算，得到RAW DATA的图像地址
+	//调用了getArrayBuffer以及uploadImg
 	upload_xhr2=function(){
-		getArrayBuffer();
+		getArrayBuffer("http://img1.douban.com/pics/nav/lg_main_a10.png")
+		.then(function(xhr){
+			//arrayBuffer
+			uploadImg(xhr.response).then(function(xhr){
+				var img=JSON.parse(xhr.responseText);
+				//console.log(img);
+				//http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg
+				//img.url
+				var rawImg=getRawUrl(img.url);
+			});
+		});
+	},
+	//简单替换字符串得到实际的RAW地址
+	getRawUrl=function(smallUrl){
+			// INPUT:var img_url="http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg"
+			// OUTPUT:var raw_url="http://img3.douban.com/view/status/raw/public/39bf2861338e7cc.jpg";
+		//TODO:consider img1???
+		var img_url=smallUrl;
+		var new_url=img_url.replace('http://img3.douban.com/view/status/small/public/','http://img3.douban.com/view/status/raw/public/');
+		//console.log(new_url);	
+		return new_url;
 	},
 	router = function (){
 		if(ifupdate_url){
 			initUpdateView();
-			upload_xhr2();
+			//upload_xhr2();
+			var rawImg=getRawUrl("http://img3.douban.com/view/status/small/public/39bf2861338e7cc.jpg");
+			console.log(rawImg);
+
 		}	
 	}
 	router();
