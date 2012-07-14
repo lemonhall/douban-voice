@@ -61,19 +61,33 @@
     * @param value    String|Blob|File|Uint8Array|ArrayBuffer Value
     * @param filename String                                  Optional File name (when value is not a string).
     **/
-    FormData.prototype['append'] = function() {
-        // if (this.__endedMultipart) {
-        //     // Truncate the closing boundary
-        //     this.data.length -= this.boundary.length + 6;
-        //     this.__endedMultipart = false;
-        // }
-        var part = '--' + this.boundary + '\r\n' +
+    FormData.prototype['append'] = function(name, value, filename) {
+    if (this.__endedMultipart) {
+        // Truncate the closing boundary
+        this.data.length -= this.boundary.length + 6;
+        this.__endedMultipart = false;
+    }
+    var valueType = Object.prototype.toString.call(value),
+        part = '--' + this.boundary + '\r\n' +
         		   'Content-Disposition: form-data; name=\"ck\"\r\n\r\n'+
         		   'HwkQ\r\n'+
-        			'--' + this.boundary + '\r\n' + 
-                	'Content-Disposition: form-data; name=\"image\";filename=\"android.png\"\r\nContent-Type: image/png\r\n\r\n';
+        			'--' + this.boundary + '\r\n';
+
+    if (/^\[object (?:Blob|File)(?:Constructor)?\]$/.test(valueType)) {
+        return this.append(name,
+                        new Uint8Array(new FileReaderSync().readAsArrayBuffer(value)),
+                        filename || value.name);
+    } else if (/^\[object (?:Uint8Array|ArrayBuffer)(?:Constructor)?\]$/.test(valueType)) {
+        part += 'Content-Disposition: form-data;name=\"image\"; filename="'+ ('android.png' || 'blob').replace(/"/g,'%22') +'"\r\n';
+        part += 'Content-Type: image/png\r\n\r\n';
         this.__append(part);
-    };
+        this.__append(value);
+        part = '\r\n';
+    } else {
+        part += '\r\n\r\n' + value + '\r\n';
+    }
+    this.__append(part);
+};
 })();
 
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
@@ -479,8 +493,6 @@ var	getUserName = function(){
 	    var xhr = new XMLHttpRequest();
 	    // Using FormData polyfill for Web workers!
 	    var fd = new FormData();
-	    fd.append('server-method', 'upload');
-
 	    // The native FormData.append method ONLY takes Blobs, Files or strings
 	    // The FormData for Web workers polyfill can also deal with array buffers
 	    fd.append('file', arrayBuffer);
