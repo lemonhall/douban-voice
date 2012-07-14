@@ -61,6 +61,7 @@
         "images/ico-voice.gif",
         "images/tqq_voice.png",
         "test.wav",
-        "voice_font.svg"
+        "voice_font.svg",
+        "worker.js"
     ]
 }

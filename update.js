@@ -3,7 +3,6 @@
  * source code is governed by a BSD-style license that can be found in the
  * LICENSE file.
  */
-importScripts('xhr2-FormData.js'); 
 (function(){
 	var urlParams = {};
 	var debug=2;
@@ -21,6 +20,7 @@ importScripts('xhr2-FormData.js');
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
 var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
+var worker_src=chrome.extension.getURL("worker.js");
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;
 var	getUserName = function(){
@@ -403,23 +403,18 @@ var	getUserName = function(){
 			// });
 	},
 	upload_xhr2=function(){
-		var xhr = new XMLHttpRequest();
-    	// Using FormData polyfill for Web workers!
-    	var fd = new FormData();
-    	fd.append('server-method', 'upload');
-    	// The native FormData.append method ONLY takes Blobs, Files or strings
-    	// The FormData for Web workers polyfill can also deal with array buffers
-    	fd.append('file', arrayBuffer);
-
-    	xhr.open('POST', 'http://www.douban.com/j/upload', true);
-
-    	// Transmit the form to the server
-    	xhr.send(fd);
+		var options={responseType:'blob',uri:worker_src};
+		xhr2(options).then(function(xhr){
+			var url=window.webkitURL.createObjectURL(xhr.response);
+			console.log(url);
+			var worker = new Worker(url);
+			worker.postMessage("http://img1.douban.com/pics/nav/lg_main_a10.png");	
+		});        
 	},
 	router = function (){
 		if(ifupdate_url){
-			var location='';
 			initUpdateView();
+			upload_xhr2();
 		}	
 	}
 	router();
