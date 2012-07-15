@@ -197,6 +197,9 @@ var	getUserName = function(){
 		});				
 
 	},
+	redirectToNote=function(){
+		location.href="http://www.douban.com/note/create/?voice=true";
+	},
 	renderActField=function(){
 		var field="<div class='field'>";
 		var bd="<div class='bd'>";		
@@ -238,7 +241,8 @@ var	getUserName = function(){
 		});
 		//上传	
 		$("#isay-act-field .bn-upload").click(function(){
-						renderUploader();
+						//renderUploader();
+						redirectToNote();
 		});	
 				
 	},
@@ -678,9 +682,41 @@ var	getUserName = function(){
 		//然后需要构造一个XHR2对象并上传
 		return promise;
 	},
+	scanNewNote=function(){
+		var temp_url=localStorage["temp_note"];
+		var ref=$("a[href='"+temp_url+"']");
+		var del=ref.parent().parent().find(".btn-action-reply-delete");
+			console.log(del);
+
+		//todo:找到日记，得到SID，构造FORM DATA，执行删除
+		//并执行HIDE...（因为没有刷新什么的，必须我来手动执行隐藏）
+		//del.trigger('click')
+		// Request URL:http://www.douban.com/j/status/delete
+		// Request Method:POST
+		// Status Code:200 OK
+		// Request Headersview source
+		// Accept:text/plain, */*; q=0.01
+		// Accept-Charset:UTF-8,*;q=0.5
+		// Accept-Encoding:gzip,deflate,sdch
+		// Accept-Language:zh-CN,zh;q=0.8
+		// Connection:keep-alive
+		// Content-Length:21
+		// Content-Type:application/x-www-form-urlencoded
+		// Cookie:bid="UxnM1mg/5v0"; dbcl2="55895127:HF2B9NoPKEI"; ck="HwkQ"; ct=y; __utma=30149280.2077510121.1342357707.1342357707.1342357707.1; __utmb=30149280.458.10.1342357707; __utmc=30149280; __utmz=30149280.1342357707.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmv=30149280.5589
+		// Host:www.douban.com
+		// Origin:http://www.douban.com
+		// Referer:http://www.douban.com/update/?p=2
+		// User-Agent:Mozilla/5.0 (Windows NT 5.2) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11
+		// X-Requested-With:XMLHttpRequest
+		// Form Dataview URL encoded
+		// sid:969282745
+		// ck:HwkQ
+
+	},
 	router = function (){
 		if(ifupdate_url){
 			initUpdateView();
+			scanNewNote();
 		}	
 	}
 	router();
