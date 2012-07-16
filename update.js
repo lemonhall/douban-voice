@@ -30,8 +30,10 @@
  *                http://dev.w3.org/html5/workers/#apis-available-to-workers
  **/
 (function() {
+	var debug=true;
+	if (debug===true) {
     // Export variable to the global scope
-    (this == undefined ? self : this)['FormData'] = FormData;
+    (this == undefined ? self : this)['FormData'] = FormData;   
 
     var ___send$rw = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype['send'] = function(data) {
@@ -45,12 +47,28 @@
         return ___send$rw.call(this, data);
     };
 
+    var ___open$rw = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype['open'] = function() {
+        console.log(arguments);
+        // Invoke original XHR.open
+        return ___open$rw.apply(this, arguments);
+    };
+
     function FormData() {
-        // Force a Constructor
+    	var myself=this;
+        // Force a Constructor        
         if (!(this instanceof FormData)) return new FormData();
+		//得到参数的类型？
+        // var argumentsType = Object.prototype.toString.call(arguments[0]);
+        // console.log("argumentsType???"+argumentsType);
+
+
         // Generate a random boundary - This must be unique with respect to the form's contents.
-        this.boundary = '------RWWorkerFormDataBoundary' + Math.random().toString(36);
+        this.boundary = '----WebKitFormBoundary' + Math.random().toString(36);
         var internal_data = this.data = [];
+        this.args=arguments;
+        
+        var internal_data_string=this.data_string=[];
         /**
         * Internal method.
         * @param inp String | ArrayBuffer | Uint8Array  Input
@@ -58,15 +76,30 @@
         this.__append = function(inp) {
             var i=0, len;
             if (typeof inp === 'string') {
-                for (len=inp.length; i<len; i++)
-                    internal_data.push(inp.charCodeAt(i) & 0xff);
-            } else if (inp && inp.byteLength) {/*If ArrayBuffer or typed array */
+                internal_data_string.push(inp);
+                for (len=inp.length; i<len; i++){
+                    internal_data.push(inp.charCodeAt(i) & 0xff);                   
+                }
+            } else if (inp && inp.byteLength) {/*If ArrayBuffer or typed array */   
                 if (!('byteOffset' in inp))   /* If ArrayBuffer, wrap in view */
                     inp = new Uint8Array(inp);
                 for (len=inp.byteLength; i<len; i++)
                     internal_data.push(inp[i] & 0xff);
             }
         };
+
+    //使用了JQ和UNDERSCORE，来搞定传入的如果是一个现有FORM时的问题
+    if (arguments[0] instanceof HTMLFormElement){
+        var form_ser=$(arguments[0]).serializeArray();
+              //console.log("I am a HTMLFormElement");
+              //console.log(form_ser);
+        _.each(form_ser, function(item){ 
+        	    //console.log("I am in each");
+        		//console.log(item.name);
+        		myself.append(item.name,item.value);
+        });
+                
+    	}
     }
     /**
     * @param name     String                                  Key name
@@ -98,12 +131,13 @@
         }
         this.__append(part);
     };
-})();	
+};//End of debug==true??
+})();   
 
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
-var voice_img = chrome.extension.getURL("images/ico-voice.gif");
-var test_wav = chrome.extension.getURL("test.wav");
-var worker_src=chrome.extension.getURL("worker.js");
+	var voice_img = chrome.extension.getURL("images/ico-voice.gif");
+	var test_wav = chrome.extension.getURL("test.wav");
+	var worker_src=chrome.extension.getURL("worker.js");
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;
 var	getUserName = function(){
@@ -718,12 +752,13 @@ var	getUserName = function(){
 		//然后需要构造一个XHR2对象并上传
 		return promise;
 	},
+	//删除一个对应的SID
 	deleteNewStatu=function(ck,data_sid){
 		var xhr = new XMLHttpRequest();
 
 	    var deferred = $.Deferred(); 
 		var promise = deferred.promise();
-
+		var f=document.getElementsByName('mbform');
 	    var fd = new FormData();    
 			fd.append('sid', data_sid);
 	    	fd.append('ck', ck);
@@ -742,6 +777,7 @@ var	getUserName = function(){
 
 	    // Transmit the form to the server
 	    xhr.send(fd);
+	    console.log(fd);
 	    return promise;
 
 	},
@@ -752,7 +788,8 @@ var	getUserName = function(){
 		var new_note_url="http://www.douban.com/note/"+temp_note_id+"/";
 		var ref=$("a[href='"+new_note_url+"']");
 		var statu=ref.parent().parent().parent().parent();
-		var data_kind=statu.attr("data-object-kind");
+
+		//得到两个需要向POST提交的参数
 		var data_sid=statu.attr("data-sid");
 		var ck=$("input[name='ck']").attr("value");
 		if(debug===1){
@@ -769,8 +806,6 @@ var	getUserName = function(){
 
 		};
 		//var del=ref.parent().parent().find(".btn-action-reply-delete");
-		
-
 		//todo:找到日记，得到SID，构造FORM DATA，执行删除
 		//并执行HIDE...（因为没有刷新什么的，必须我来手动执行隐藏）
 		//del.trigger('click')
@@ -805,13 +840,28 @@ var	getUserName = function(){
 			},function(e){
 					console.log(e);
 			});
-		});
+	},
+	//用来测试以及调试的函数
+	testFormDataInterFace=function(){
+		var xhr = new XMLHttpRequest();
+		var f=document.getElementById('isay-upload');
+		var fd = new FormData(f);
+			//fd.append("test","test");
+		xhr.open('POST', 'http://www.douban.com/j/status/delete', true);
+	    // Transmit the form to the server
+	    console.log("====testFormDataInterFace====");
+	    console.log(fd);
+	    console.log("====f====");
+	    console.log($(f).serializeArray());
+	    xhr.send(fd);
+
 	},
 	router = function (){
 		if(ifupdate_url){
 			initUpdateView();
 			//scanNewNote();
 			//testDeletePostInterFace();
+			testFormDataInterFace();
 		
 
 		}//fiupdate_url end	
