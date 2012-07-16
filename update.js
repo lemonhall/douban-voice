@@ -17,78 +17,7 @@
 	       urlParams[decode(match[1])] = decode(match[2]);
 	})();
 
-	(function() {
-    // Export variable to the global scope
-    (this == undefined ? self : this)['FormData'] = FormData;
-
-    var ___send$rw = XMLHttpRequest.prototype.send;
-    XMLHttpRequest.prototype['send'] = function(data) {
-        if (data instanceof FormData) {
-            if (!data.__endedMultipart) data.__append('--' + data.boundary + '--\r\n');
-            data.__endedMultipart = true;
-            this.setRequestHeader('Content-Type', 'multipart/form-data; boundary=' + data.boundary);
-            data = new Uint8Array(data.data).buffer;
-        }
-        // Invoke original XHR.send
-        return ___send$rw.call(this, data);
-    };
-
-    function FormData() {
-        // Force a Constructor
-        if (!(this instanceof FormData)) return new FormData();
-        // Generate a random boundary - This must be unique with respect to the form's contents.
-        this.boundary = '----WebKitFormBoundary' + Math.random().toString(36);
-        var internal_data = this.data = [];
-        /**
-        * Internal method.
-        * @param inp String | ArrayBuffer | Uint8Array  Input
-        */
-        this.__append = function(inp) {
-            var i=0, len;
-            if (typeof inp === 'string') {
-                for (len=inp.length; i<len; i++)
-                    internal_data.push(inp.charCodeAt(i) & 0xff);
-            } else if (inp && inp.byteLength) {/*If ArrayBuffer or typed array */
-                if (!('byteOffset' in inp))   /* If ArrayBuffer, wrap in view */
-                    inp = new Uint8Array(inp);
-                for (len=inp.byteLength; i<len; i++)
-                    internal_data.push(inp[i] & 0xff);
-            }
-        };
-    }
-    /**
-    * @param name     String                                  Key name
-    * @param value    String|Blob|File|Uint8Array|ArrayBuffer Value
-    * @param filename String                                  Optional File name (when value is not a string).
-    **/
-    FormData.prototype['append'] = function(name, value, filename) {
-    if (this.__endedMultipart) {
-        // Truncate the closing boundary
-        this.data.length -= this.boundary.length + 6;
-        this.__endedMultipart = false;
-    }
-    var valueType = Object.prototype.toString.call(value),
-        part = '--' + this.boundary + '\r\n' +
-        		   'Content-Disposition: form-data; name=\"ck\"\r\n\r\n'+
-        		   'HwkQ\r\n'+
-        			'--' + this.boundary + '\r\n';
-
-    if (/^\[object (?:Blob|File)(?:Constructor)?\]$/.test(valueType)) {
-        return this.append(name,
-                        new Uint8Array(new FileReaderSync().readAsArrayBuffer(value)),
-                        filename || value.name);
-    } else if (/^\[object (?:Uint8Array|ArrayBuffer)(?:Constructor)?\]$/.test(valueType)) {
-        part += 'Content-Disposition: form-data;name=\"image\"; filename="'+ ('android.png' || 'blob').replace(/"/g,'%22') +'"\r\n';
-        part += 'Content-Type: image/png\r\n\r\n';
-        this.__append(part);
-        this.__append(value);
-        part = '\r\n';
-    } else {
-        part += '\r\n\r\n' + value + '\r\n';
-    }
-    this.__append(part);
-};
-})();
+	
 
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
 var voice_img = chrome.extension.getURL("images/ico-voice.gif");
@@ -633,16 +562,42 @@ var	getUserName = function(){
 	//上传至豆瓣，使用了自定义的方式来组建FORM。。。
 	//
 	uploadImg=function (arrayBuffer) {
+// Request URL:http://www.douban.com/j/upload
+// Request Method:POST
+// Status Code:200 OK
+// Request Headersview source
+// Accept:text/html,application/xhtml+xml,application/xml;q=0.9,*;q=0.8
+// Accept-Charset:UTF-8,*;q=0.5
+// Accept-Encoding:gzip,deflate,sdch
+// Accept-Language:zh-CN,zh;q=0.8
+// Cache-Control:max-age=0
+// Connection:keep-alive
+// Content-Length:149884
+// Content-Type:multipart/form-data; boundary=----WebKitFormBoundary5US7mCZXN7ecSiNt
+// Cookie:bid="UxnM1mg/5v0"; dbcl2="55895127:HF2B9NoPKEI"; ct=y; ck="HwkQ"; __utma=30149280.2077510121.1342357707.1342357707.1342401260.2; __utmb=30149280.298.10.1342401260; __utmc=30149280; __utmz=30149280.1342357707.1.1.utmcsr=(direct)|utmccn=(direct)|utmcmd=(none); __utmv=30149280.5589
+// Host:www.douban.com
+// Origin:http://www.douban.com
+// Referer:http://www.douban.com/update/
+// User-Agent:Mozilla/5.0 (Windows NT 5.2) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11
+// Request Payload
+// ------WebKitFormBoundary5US7mCZXN7ecSiNt
+// Content-Disposition: form-data; name="ck"
+// HwkQ
+// ------WebKitFormBoundary5US7mCZXN7ecSiNt
+// Content-Disposition: form-data; name="image"; filename="hideData.png"
+// Content-Type: image/png
+// ------WebKitFormBoundary5US7mCZXN7ecSiNt--
 	    var xhr = new XMLHttpRequest();
 
 	    var deferred = $.Deferred(); 
 		var promise = deferred.promise();
+		var ck=$("input[name='ck']").attr("value");
 
-	    // Using FormData polyfill for Web workers!
 	    var fd = new FormData();
-	    // The native FormData.append method ONLY takes Blobs, Files or strings
-	    // The FormData for Web workers polyfill can also deal with array buffers
-	    fd.append('file', arrayBuffer);
+		    //先传递钥匙过去
+		    fd.append('ck', ck);
+		    //再传递一个name=image的arrayBuffer过去
+		    fd.append('image', arrayBuffer);
 	    xhr.open('POST', 'http://www.douban.com/j/upload', true);
 
 	    xhr.onerror = function(e) {
@@ -682,11 +637,58 @@ var	getUserName = function(){
 		//然后需要构造一个XHR2对象并上传
 		return promise;
 	},
+	deleteNewStatu=function(ck,data_sid){
+		var xhr = new XMLHttpRequest();
+
+	    var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+
+	    var fd = new FormData();    
+			fd.append('sid', data_sid);
+	    	fd.append('ck', ck);
+
+	    xhr.open('POST', 'http://www.douban.com/j/status/delete', true);
+
+	    xhr.onerror = function(e) {
+			deferred.reject(xhr, e);
+        }
+
+	    xhr.onload = function(e) {
+	        if (xhr.status == 200) {
+	            deferred.resolve(xhr);
+	        }
+	    };
+
+	    // Transmit the form to the server
+	    xhr.send(fd);
+	    return promise;
+
+	},
 	scanNewNote=function(){
-		var temp_url=localStorage["temp_note"];
-		var ref=$("a[href='"+temp_url+"']");
-		var del=ref.parent().parent().find(".btn-action-reply-delete");
-			console.log(del);
+		//构造并找到新的日记的ID
+		var debug=1;
+		var temp_note_id=localStorage["temp_note_id"];
+		var new_note_url="http://www.douban.com/note/"+temp_note_id+"/";
+		var ref=$("a[href='"+new_note_url+"']");
+		var statu=ref.parent().parent().parent().parent();
+		var data_kind=statu.attr("data-object-kind");
+		var data_sid=statu.attr("data-sid");
+		var ck=$("input[name='ck']").attr("value");
+		if(debug===1){
+			console.log(ck);
+			console.log(data_sid);
+		}
+		//如果不为undefined则开始删除工作
+		if (data_sid!=undefined) {
+			deleteNewStatu(ck,data_sid).then(function(xhr){
+					console.log(xhr);
+			},function(e){
+					console.log(e);
+			});
+
+		};
+		//var del=ref.parent().parent().find(".btn-action-reply-delete");
+		
 
 		//todo:找到日记，得到SID，构造FORM DATA，执行删除
 		//并执行HIDE...（因为没有刷新什么的，必须我来手动执行隐藏）
@@ -695,7 +697,7 @@ var	getUserName = function(){
 		// Request Method:POST
 		// Status Code:200 OK
 		// Request Headersview source
-		// Accept:text/plain, */*; q=0.01
+		// Accept:text/plain, *; q=0.01
 		// Accept-Charset:UTF-8,*;q=0.5
 		// Accept-Encoding:gzip,deflate,sdch
 		// Accept-Language:zh-CN,zh;q=0.8
@@ -713,11 +715,25 @@ var	getUserName = function(){
 		// ck:HwkQ
 
 	},
+	//用来测试以及调试的函数
+	testDeletePostInterFace=function(){
+		var data_sid='931234';
+		var ck='HwkQ';
+			deleteNewStatu(ck,data_sid).then(function(xhr){
+					console.log(xhr);
+			},function(e){
+					console.log(e);
+			});
+		});
+	},
 	router = function (){
 		if(ifupdate_url){
 			initUpdateView();
-			scanNewNote();
-		}	
+			//scanNewNote();
+			//testDeletePostInterFace();
+		
+
+		}//fiupdate_url end	
 	}
 	router();
  

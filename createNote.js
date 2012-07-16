@@ -60,7 +60,7 @@ var	getFileFromNote=function(){
 		// $("#header").hide();
 		// $("#footer").hide();
 		var note_id=$("#note_id");
-		var new_note_url="http://www.douban.com/note/"+note_id.prop("value")+"/";
+
 		var h1=$("h1:first");
 			h1.html("保存语音");
 			h1.hide();
@@ -88,7 +88,7 @@ var	getFileFromNote=function(){
 		var	player=$('#voice_player');
 		renderPlayer(player,test_wav);
 
-		localStorage["temp_note"]=new_note_url;
+		localStorage["temp_note_id"]=note_id.prop("value");
 			//TODO:接下来将转换得到的TMP WAV BASE64字符，直接存入日记
 			//得到BASE64的内容
 			//content.html(base64);
@@ -103,8 +103,9 @@ var	getFileFromNote=function(){
 			initNote();
 		}
 		//如果是在刚创建的日记里则赶紧处理	
-		var temp_url=localStorage["temp_note"];
-		if(location.href===temp_url){
+		var temp_note_id=localStorage["temp_note_id"];
+		var new_note_url="http://www.douban.com/note/"+temp_note_id+"/";
+		if(location.href===new_note_url){
 			console.log("I am in temp~");
 			location.href="http://www.douban.com/update/";
 		}
