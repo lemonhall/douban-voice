@@ -11,8 +11,10 @@
  *                http://dev.w3.org/html5/workers/#apis-available-to-workers
  **/
 (function() {
+    var debug=true;
+    if (debug===true) {
     // Export variable to the global scope
-    (this == undefined ? self : this)['FormData'] = FormData;
+    (this == undefined ? self : this)['FormData'] = FormData;   
 
     var ___send$rw = XMLHttpRequest.prototype.send;
     XMLHttpRequest.prototype['send'] = function(data) {
@@ -34,21 +36,19 @@
     };
 
     function FormData() {
-        // Force a Constructor
+        var myself=this;
+        // Force a Constructor        
         if (!(this instanceof FormData)) return new FormData();
-        // Generate a random boundary - This must be unique with respect to the form's contents.
-        this.boundary = '------WebKitFormBoundary' + Math.random().toString(36);
-        var internal_data = this.data = [];
-        this.args=arguments;
         //得到参数的类型？
         // var argumentsType = Object.prototype.toString.call(arguments[0]);
         // console.log("argumentsType???"+argumentsType);
 
-        if (arguments[0][0] instanceof HTMLFormElement){
 
-                console.log("I am a HTMLFormElement");
-                console.log(arguments[0][0]);
-        }
+        // Generate a random boundary - This must be unique with respect to the form's contents.
+        this.boundary = '----WebKitFormBoundary' + Math.random().toString(36);
+        var internal_data = this.data = [];
+        this.args=arguments;
+        
         var internal_data_string=this.data_string=[];
         /**
         * Internal method.
@@ -68,6 +68,19 @@
                     internal_data.push(inp[i] & 0xff);
             }
         };
+
+    //使用了JQ和UNDERSCORE，来搞定传入的如果是一个现有FORM时的问题
+    if (arguments[0] instanceof HTMLFormElement){
+        var form_ser=$(arguments[0]).serializeArray();
+              //console.log("I am a HTMLFormElement");
+              //console.log(form_ser);
+        _.each(form_ser, function(item){ 
+                //console.log("I am in each");
+                //console.log(item.name);
+                myself.append(item.name,item.value);
+        });
+                
+        }
     }
     /**
     * @param name     String                                  Key name
@@ -99,4 +112,5 @@
         }
         this.__append(part);
     };
-})();   
+};//End of debug==true??
+})(); 

@@ -1,5 +1,6 @@
 //http://www.douban.com/note/create?voice=true
 (function(){
+
 var debug=2;
 var urlParams = {};
 	var debug=2;
@@ -16,37 +17,10 @@ var urlParams = {};
 
 var url_slice=location.href.slice(0,33);
 var ifupdate_url=url_slice==="http://www.douban.com/note/create";
-var voice_img = chrome.extension.getURL("images/ico-voice.gif");
-var test_wav = chrome.extension.getURL("test.wav");
+
 //这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
 var reverse_clock=null;
-$("script:last").remove();
-var	getFileFromNote=function(){
-		var note='http://www.douban.com/note/225350522/';
-		var options={responseType:'document',uri:note};
-		var that=this;
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-        var xhr = new XMLHttpRequest(),
-            method = options.method || 'get';
-        xhr.responseType = options.responseType ||'document';   
-
-		xhr.onload = function() {
-			deferred.resolve(xhr);
-		};
-
-        xhr.onerror = function(e) {
-			deferred.reject(xhr, e);
-        }
-    
-        xhr.open(method, options.uri);
-        xhr.send();
-    
-        //xhr.send((options.data) ? urlstringify(options.data) : null);
-
-		return promise;
-	},
-	renderPlayer=function(dom,base64File){
+var	renderPlayer=function(dom,base64File){
 			var src=" src='"+base64File+"' ";
 			var audio_tag="<audio autoplay controls "+ 
 							src+

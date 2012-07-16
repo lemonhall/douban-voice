@@ -12,31 +12,14 @@
       "matches" : [
         "http://www.douban.com/update/*"
       ],
-      "js" : ["jquery-1.7.2.min.js","underscore-min.js","update.js"],
-      "run_at" : "document_end",
-      "all_frames" : false
-    },
-    {
-      "matches" : [
-        "http://t.qq.com/*"
-      ],
-      "js" : ["jquery-1.7.2.min.js","underscore-min.js","tqq.js"],
-      "run_at" : "document_end",
-      "all_frames" : false
-    },
-    {
-      "matches" : [
-        "http://weibo.com/*"
-      ],
-      "js" : ["jquery-1.7.2.min.js","underscore-min.js","weibo.js"],
-      "run_at" : "document_end",
-      "all_frames" : false
-    },
-    {
-      "matches" : [
-        "http://guide.renren.com/*"
-      ],
-      "js" : ["jquery-1.7.2.min.js","underscore-min.js","renren.js"],
+      "js" : ["lib/jquery-1.7.2.min.js",
+              "lib/underscore-min.js",
+              "douban/xhr2-FormData.js",
+              "douban/common.js",
+              "douban/savToNote.js",
+              "douban/savTodoubanImgServer.js",
+              "douban/savToSina.js",
+              "douban/update.js"],
       "run_at" : "document_end",
       "all_frames" : false
     },
@@ -44,7 +27,39 @@
       "matches" : [
         "http://www.douban.com/note/*"
       ],
-      "js" : ["jquery-1.7.2.min.js","underscore-min.js","createNote.js"],
+      "js" : ["lib/jquery-1.7.2.min.js",
+              "lib/underscore-min.js",
+              "douban/createNote.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://t.qq.com/*"
+      ],
+      "js" : ["lib/jquery-1.7.2.min.js",
+              "lib/underscore-min.js"
+              ,"tqq/tqq.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://weibo.com/*"
+      ],
+      "js" : ["lib/jquery-1.7.2.min.js",
+              "lib/underscore-min.js"
+              ,"weibo/weibo.js"],
+      "run_at" : "document_end",
+      "all_frames" : false
+    },
+    {
+      "matches" : [
+        "http://guide.renren.com/*"
+      ],
+      "js" : ["lib/jquery-1.7.2.min.js",
+              "lib/underscore-min.js",
+              "renren/renren.js"],
       "run_at" : "document_end",
       "all_frames" : false
     }
@@ -61,8 +76,6 @@
     "web_accessible_resources": [
         "images/ico-voice.gif",
         "images/tqq_voice.png",
-        "test.wav",
-        "voice_font.svg",
-        "worker.js"
+        "test.wav"
     ]
 }
