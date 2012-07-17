@@ -96,6 +96,8 @@ var	getUserName = function(){
 			    //为空的情况下，清空LABLE，并加入自定义字体的标签
 			    	text_label.html('');
 			    	text_obj.text("؆");
+			    	var saveToLocal=save.savToSina.saveToLocal;
+			    	saveToLocal(base64);
 			    }else{
 			    //已经有内容了,则仅仅加入特殊字符标记
 			    	console.log("saying is not null");
@@ -154,36 +156,6 @@ var	getUserName = function(){
 				renderUploader();
 		});	
 				
-	},
-	//有则读缓存，无则取数据并存入当地
-	//以后可以把这里的逻辑用WEBSQL来搞定，毕竟可以无限使用空间
-	getFile=function(id){
-		var id=id || 'dbVoice_test';
-		var base64File=undefined;
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-
-		if(localStorage.hasOwnProperty(id)){
-			base64File=localStorage[id];
-			deferred.resolve(base64File);
-		}else{
-			var options=undefined;
-			//for debug			
-			if (id==='dbVoice_test') {
-				options={responseType:'blob',uri:test_wav};
-			}else{
-				//以后的URI就可以取实际的远程地址了
-				options={responseType:'blob',uri:test_wav};
-			}
-			xhr2(options).then(function(xhr){
-				loadBlobToBase64(xhr.response).then(function(base64){
-					localStorage.setItem(id, base64);
-					base64File=base64;
-					deferred.resolve(base64File);
-				});
-			});
-		}
-		return promise;
 	},
 	renderPlayer=function(dom,base64File){
 			var src=" src='"+base64File+"' ";
@@ -255,9 +227,29 @@ var	getUserName = function(){
 		if(ifPlayer){
 			console.log("ifPlayer holder?"+ifPlayer);
 			var user_quote_obj=myself.find("div.bd blockquote p");
-			getFile().then(function(base64File){
-				renderPlayer(user_quote_obj,base64File);
-			});						
+			//使用了SINA的这个类的接口
+			var getFile=save.savToSina.getFile;
+			var setFile=save.savToSina.setFile;
+			//不能这么快就渲染，得加一个延时的逻辑
+			//等待上传以及等待某用户上传完成...这大概需要个3秒钟左右吧？
+			//应该比较合适...3秒钟
+			getFile(Statue.data_sid).then(function(base64){
+				renderPlayer(user_quote_obj,base64);
+			},function(){
+				//这里有一个逻辑上的错误，上传逻辑应仅仅针对本地
+				//其他用户可不能乱上传
+				var temp_base64=localStorage["VOICE_BUFFER"];
+				console.log("I am not in remote:"+Statue.data_sid);
+				localStorage["VOICE_BUFFER_ID"]=Statue.data_sid;				
+				renderPlayer(user_quote_obj,temp_base64);
+				//不在远端，那么就开始上传吧
+				setFile(Statue.data_sid,temp_base64).then(function(returnID){
+						console.log(returnID);
+				},function(){
+
+				});					
+			});
+				
 		}
 	}//end of not user quote null
 		//===========================================
@@ -296,10 +288,7 @@ var	getUserName = function(){
 		if(ifupdate_url){
 			initVoiceAction();
 			initPlayer();
-			var getFile=save.savToSina.getFile;
-				getFile("970402646").then(function(base64){
-						console.log(base64);
-				});
+
 			// var uploadToServer=save.savToSina.uploadToServer;
 			// 	uploadToServer(getUserName());
 		}//if_update_url end	
