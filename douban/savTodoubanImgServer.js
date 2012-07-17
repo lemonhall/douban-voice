@@ -143,7 +143,6 @@ var	__uploadImg=function (arrayBuffer) {
 		getArrayBuffer(test_wav).then(function(wav_buffer){
 				var new_TypedArray=__appendBuffer_and_fileSizeMeta(imgArrayBuffer,wav_buffer.response);
 				deferred.resolve(new_TypedArray.buffer);
-			});
 		});
 		return promise;
 	},

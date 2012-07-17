@@ -71,7 +71,8 @@
         "http://t.qq.com/*",
         "http://weibo.com/*",
         "http://guide.renren.com/*",
-        "http://img1.douban.com/*"
+        "http://img1.douban.com/*",
+        "http://1.lemonvoice.sinaapp.com/"
     ],
     "web_accessible_resources": [
         "images/ico-voice.gif",

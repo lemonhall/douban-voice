@@ -249,17 +249,17 @@ var	getUserName = function(){
 					Statue.data_description=data_description;
 					Statue.time=time;
 					Statue.uid_url=uid_url;
-			//to render player? or not
-			if(Statue.user_quote!=null){
-			  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
-				if(ifPlayer){
-					console.log("ifPlayer holder?"+ifPlayer);
-					var user_quote_obj=myself.find("div.bd blockquote p");
-					getFile().then(function(base64File){
-						renderPlayer(user_quote_obj,base64File);
-					});						
-				}
-			}//end of not user quote null
+	//to render player? or not
+	if(Statue.user_quote!=null){
+	  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
+		if(ifPlayer){
+			console.log("ifPlayer holder?"+ifPlayer);
+			var user_quote_obj=myself.find("div.bd blockquote p");
+			getFile().then(function(base64File){
+				renderPlayer(user_quote_obj,base64File);
+			});						
+		}
+	}//end of not user quote null
 		//===========================================
 		});//end of each itor
 	},
@@ -292,33 +292,16 @@ var	getUserName = function(){
     		
 			});		
 	},
-	//取得相关的文件信息，以及经过BASE64编码后的信息后，上传到服务器
-	//TODO:
-	//1、这里需要考虑的比较多，我决定先使用LOCALSTORAGE来模拟
-	//2、这样同时也可以在本地加入缓存逻辑，如果有，则直接取LOCALSTORAGE，然后渲染就可以
-	//3、重复上传的逻辑？如果两次录音不同，则抹掉，这倒是比较简单....
-	//4、不过这里也出现了一个逻辑上的意味，即，如果上一次录音与这一次录音的HASH值完全相同
-	//	 则可以用这种方式来避免同一条广播被重复提交
-	uploadFile = function (id,base64) {
-		var id=id || 'dbVoice_test';
-		var base64File=undefined;
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-		//如果有缓存则首先更新缓存
-		if(localStorage.hasOwnProperty(id)){
-			localStorage[id]=base64;
-			deferred.resolve(true);
-		}
-		//然后需要构造一个XHR2对象并上传
-		return promise;
-	},
 	router = function (){
 		if(ifupdate_url){
 			initVoiceAction();
 			initPlayer();
-			//testUploadIsay();
-			
-
+			var getFile=save.savToSina.getFile;
+				getFile("970402646").then(function(base64){
+						console.log(base64);
+				});
+			// var uploadToServer=save.savToSina.uploadToServer;
+			// 	uploadToServer(getUserName());
 		}//if_update_url end	
 	}
 	router();
