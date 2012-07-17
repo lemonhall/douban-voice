@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2010 The Chromium Authors. All rights reserved.  Use of this
- * source code is governed by a BSD-style license that can be found in the
- * LICENSE file.
- */
 (function(){
 	var urlParams = {};
 	var debug=2;
@@ -15,9 +10,7 @@
 
 	    while (match = search.exec(query))
 	       urlParams[decode(match[1])] = decode(match[2]);
-	})();
-
-  
+	})();  
 
 var ifupdate_url=location.href.slice(0,29)=="http://www.douban.com/update/";
 //这是一个在此模块内的全局变量
@@ -28,25 +21,45 @@ var	getUserName = function(){
 				return login_user;
 			}
 		},
-	// HTML5 voice record demo
-	//http://jsfiddle.net/DerekL/JV996/
-	//以后可能也需要deffered化这一段代码，返回的无非就是一段BASE64的东西就可以了
-	doRecord=function(){
-    var obj = {}, txt="";
-        obj = {
-            video: false,
-            audio: true
-        };
-        txt = "<audio controls autoplay>";
-    if (reverse_clock===null) {
-    navigator.webkitGetUserMedia(obj, function(stream) {
-        $("#voice-result").empty();       
-        stream.onended=function(){
-        	console.log("Hi...I am end");
-        	console.log(stream);
+	renderIsayTextArea=function(){
+		var text_obj=$('#isay-cont');
+		var text_label=$('#isay-label');
+		var label=text_label.html();
+			 if (label==='说点什么吧...') {
+			    //为空的情况下，清空LABLE，并加入自定义字体的标签
+			    	text_label.html('');
+			    	text_obj.val("؆");
+			    }else{
+			    //已经有内容了,则仅仅加入特殊字符标记
+			    	console.log("saying is not null");
+			    	var text=text_obj.val();
+			    	text_obj.val(text+"؆");	
+			    }	
+	},
+	onRecordSuccess=function(myself,stream){
+		var myself=myself||$("#isay-act-field .bn-record");		
+		var txt = "<audio controls autoplay>";
+		console.log("Hi...I am end");
+        console.log(stream);
         	var output = $(txt).appendTo("#voice-result")[0];
-        }
-        //设置一个倒计时
+        		myself.prop('disabled', false);
+
+        	var options={responseType:'blob',uri:test_wav};
+				xhr2(options)
+					.then(function(xhr){
+				loadBlobToBase64(xhr.response)
+					.then(function(base64){
+        				var saveToLocal=save.savToSina.saveToLocal;
+			    		saveToLocal(base64);
+			    		renderIsayTextArea();
+			    	});
+				});
+		myself.prop('value', "重录");
+	},
+	renderClock=function(myself,stream){
+		//保存录音的按钮
+		var myself=myself||$("#isay-act-field .bn-record");
+		//设置一个倒计时
         $("#voice-result").after("<span id='voice-clock'>14</span>");
         var clock=$('#voice-clock');
         reverse_clock=setInterval(function(){
@@ -61,56 +74,36 @@ var	getUserName = function(){
         	clearInterval(reverse_clock);
         	clock.remove();
         	reverse_clock=null;
-        	$(".bn-upload").show();
+        	myself.prop('disabled', false);
+
         },2000);
-    }, function(err) {
-        console.log(err);
-        err.code == 1 && (alert("可以再次点击录音，直到你想好了为止"))
-    });
-	}//end of if of reverse_clock 
+
 	},
-	renderUploader=function(){
-			var li=$("#voice-name");
-			var p = "<p width='300px' class='loader'></p>";
-			li.after(p);
-		//有两个功能性的BUG
-		//1、第二次点击上传后，会重复加载的问题。。这个得改，换成HTML()方法也许可以
-		//2、识别输入框，加入锚记的功能，另外也许还得搞定字数的问题
-		var options={responseType:'blob',uri:test_wav};
-		xhr2(options).then(function(xhr){
+	// HTML5 voice record demo
+	//http://jsfiddle.net/DerekL/JV996/
+	//以后可能也需要deffered化这一段代码，返回的无非就是一段BASE64的东西就可以了
+	doRecord=function(myself){
+		//保存录音的按钮
+		var myself=myself||$("#isay-act-field .bn-record");
+	    var opt = {}, txt="";
+	        opt = {video: false,audio: true};        
+		    if (reverse_clock===null) {
+			    navigator.webkitGetUserMedia(opt, function(stream) {
+			        $("#voice-result").empty();
 
-			loadBlobToBase64(xhr.response).then(function(base64){
-				var dom=$('.loader');
-	        		var src=" src='"+base64+"' ";
-					var audio_tag="<audio autoplay controls "+ 
-										src+
-										//"id=audio_"+
-										//Statue.data_sid+
-										">";
-					dom.html(audio_tag);
-			      	//console.log(reader.result);
-			    var text_obj=$('#isay-cont');
-			    var text_label=$('#isay-label');
-			    var label=text_label.html();
-			    if (label==='说点什么吧...') {
-			    //为空的情况下，清空LABLE，并加入自定义字体的标签
-			    	text_label.html('');
-			    	text_obj.text("؆");
-			    	var saveToLocal=save.savToSina.saveToLocal;
-			    	saveToLocal(base64);
-			    }else{
-			    //已经有内容了,则仅仅加入特殊字符标记
-			    	console.log("saying is not null");
-			    	var text=text_obj.text();
-			    	text_obj.text(text+"؆");	
-			    }
-			    console.log("saying is not null?????"+label);			    
-			});        		
-				
-		}, function(){
-				console.log("error");
-		});				
+			        //成功获取到录音片段
+			        stream.onended=function(){
+			        	onRecordSuccess(myself,stream);
+			        }
 
+			        renderClock(myself,stream);
+		        
+			    }, function(err) {
+			    	myself.prop('disabled', false);
+			        console.log(err);
+			        err.code == 1 && (alert("可以再次点击录音，直到你想好了为止"))
+			    });
+			}//end of if of reverse_clock 
 	},
 	renderActField=function(){
 		var field="<div class='field'>";
@@ -122,9 +115,6 @@ var	getUserName = function(){
 		var span_btn="<span class='bn-flat'>"+
 						"<input type='button' value='录音'"+
 						"class='bn-record'></span>";
-		var upload_btn="<span class='bn-flat'>"+
-				"<input type='button' value='上传'"+
-				"class='bn-upload'></span>";
 		var test="<input type='file' accept='audio/*;capture=microphone'>";
 		var end_div="</div>";
 		var result="<span id='voice-result'></span>";
@@ -135,27 +125,24 @@ var	getUserName = function(){
 		                    name+
 		                   // test+
 		                   cancel_btn+
-		                    span_btn+upload_btn+
+		                    span_btn+
 		                   end_div+
 		               end_div;
 		$("#isay-act-field").html(final_html);
 		//$("#isay-act-field").show();
 		$("#isay-act-field .field").show();
-		//默认不显示上传
-		$(".bn-upload").hide();
 		//取消录音
 		$("#isay-act-field .isay-cancel").click(function(){
 				$("#isay-act-field .field").hide();
 		});
+		var bn_record=$("#isay-act-field .bn-record");
 		//录音	
-		$("#isay-act-field .bn-record").click(function(){
-				doRecord();
-		});
-		//上传	
-		$("#isay-act-field .bn-upload").click(function(){
-				renderUploader();
-		});	
-				
+		bn_record.click(function(){
+				//把自身的指针传过去
+				doRecord(bn_record);
+				//防止用户猛击
+				bn_record.prop('disabled', true);
+		});				
 	},
 	renderPlayer=function(dom,base64File){
 			var src=" src='"+base64File+"' ";
@@ -166,61 +153,47 @@ var	getUserName = function(){
 							">";
 			dom.after(audio_tag);
 	},
+	failLoadFile=function(Statue,user_quote_obj){
+		var getFile=save.savToSina.getFile;
+		var setFile=save.savToSina.setFile;
+		//得改成有BACKGROUND来上传
+		var cur_usr=getUserName();
+		if(Statue.user_uid===cur_usr){
+			var temp_base64=localStorage["VOICE_BUFFER"];
+			console.log("I am not in remote:"+Statue.data_sid);
+			localStorage["VOICE_BUFFER_ID"]=Statue.data_sid;				
+			renderPlayer(user_quote_obj,temp_base64);
+			//不在远端，那么就开始上传吧
+			setFile(Statue.data_sid,temp_base64).then(function(returnID){
+					console.log(returnID);
+			},function(){
+
+			});
+		}else{
+			//等一段时间再刷新一下吧，或者也可以自动更新
+			var temp_base64=localStorage["VOICE_BUFFER"];
+			renderPlayer(user_quote_obj,temp_base64);
+			setTimeout(function(){
+				//隔3秒钟再试一次
+				getFile(Statue.data_sid).then(function(base64){
+					renderPlayer(user_quote_obj,base64);
+				});
+			},3000);
+		}//end of 如果不是当前用户，又没抓到，来个setTimeOut先？
+	},
 	initPlayer=function(){
-		var datatypehash={3043:"推荐单曲",1025:"上传照片",1026:"相册推荐",1013:"推荐小组话题",1018:"我说",1015:"推荐/新日记",1022:"推荐网址",1012:"推荐书评",1002:"看过电影",3049:"读书笔记",1011:"活动兴趣",3065:"东西",1001:"想读/读过",1003:"想听/听过"};
-
-		var need_save_kind={1026:"相册推荐",1013:"推荐小组话题",1015:"推荐/新日记",1012:"推荐书评",3065:"东西",1025:"推荐相片"}
-
-		$("div.status-item").each(function(){
-			var myself=$(this);
-				//优先判断是否为值得存取的类型
-				//【存入数据库】类型
-				var data_kind=myself.attr("data-object-kind");
-				//【存入数据库】数据行为
-				var data_action=myself.attr("data-action");
-					if(debug==1){console.log("Action:"+data_action);}
-			//============================================
-				//打印人性化的提示信息
-				var action=datatypehash[data_kind]===undefined?data_kind:datatypehash[data_kind];
-					if(debug==1){console.log("Kind:"+action);}		
-				//【数据库KEY】SID
-				var data_sid=myself.attr("data-sid");
-					if(debug==1){console.log("ID:"+data_sid);}
-				//用户地址
-				var user_url=myself.find("div.bd p.text a:first").attr("href");
-					if(debug==1){console.log("user_url:"+user_url);}		
-				//用户的昵称
-				var user_name=myself.find("div.bd p.text a:first").html();
-					if(debug==1){console.log("user_name:"+user_name);}
-				//用户的发言
-				var user_quote=myself.find("div.bd blockquote p").html();
-					if(debug==1){console.log("user_quote:"+user_quote);}
-				//【存入数据库】用户的唯一ID
-				var user_uid=user_url.slice(29,-1);
-					if(debug==1){console.log("user_uid:"+user_uid);}
-				//【存入数据库】行为对象，div.bd p.text下的第二个a连接的href一般来说就是行为
-				var data_object=myself.find("div.bd p.text a:eq(1)").attr("href");
-					if(debug==1){console.log("行为对象:"+data_object);}
-				//【存入数据库】行为对象的描述
-				var data_description=myself.find("div.bd p.text a:eq(1)").html();
-					if(debug==1){console.log("行为对象:"+data_description);}
-				//【存入数据库？】时间对象？
-				var time=myself.find("div.actions span.created_at").attr("title");
-					if(debug==1){console.log("Time:"+time);}
-				//生成一个全局对象ID的URL并存入数据库
-				var uid_url=user_url+"status/"+data_sid;
-
-				var Statue={};
-					Statue.action=action;
-					Statue.data_sid=data_sid;
-					Statue.user_url=user_url;
-					Statue.user_name=user_name;
-					Statue.user_quote=user_quote;
-					Statue.user_uid=user_uid;
-					Statue.data_object=data_object;
-					Statue.data_description=data_description;
-					Statue.time=time;
-					Statue.uid_url=uid_url;
+	$("div.status-item").each(function(){
+	//优化了一下，尽力少扫描些信息
+	var myself=$(this);
+		var data_sid=myself.attr("data-sid");
+		var user_url=myself.find("div.bd p.text a:first").attr("href");	
+		var user_quote=myself.find("div.bd blockquote p").html();
+		var user_uid=user_url.slice(29,-1);
+		var Statue={};
+			Statue.data_sid=data_sid;
+			Statue.user_url=user_url;
+			Statue.user_quote=user_quote;
+			Statue.user_uid=user_uid;
 	//to render player? or not
 	if(Statue.user_quote!=null){
 	  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
@@ -236,21 +209,10 @@ var	getUserName = function(){
 			getFile(Statue.data_sid).then(function(base64){
 				renderPlayer(user_quote_obj,base64);
 			},function(){
-				//这里有一个逻辑上的错误，上传逻辑应仅仅针对本地
-				//其他用户可不能乱上传
-				var temp_base64=localStorage["VOICE_BUFFER"];
-				console.log("I am not in remote:"+Statue.data_sid);
-				localStorage["VOICE_BUFFER_ID"]=Statue.data_sid;				
-				renderPlayer(user_quote_obj,temp_base64);
-				//不在远端，那么就开始上传吧
-				setFile(Statue.data_sid,temp_base64).then(function(returnID){
-						console.log(returnID);
-				},function(){
-
-				});					
-			});
+				failLoadFile(Statue,user_quote_obj);							
+			});//end of 没有得到恰当的音频文件
 				
-		}
+		}//end of ifplayer?
 	}//end of not user quote null
 		//===========================================
 		});//end of each itor
@@ -267,8 +229,7 @@ var	getUserName = function(){
 					    "title='添加语音'>语音</a>");
 			var voice_btn=$(".ico-voice");
 
-			voice_btn.bind("click",function(event){
-				console.log("Voice Btn clicked");
+			voice_btn.bind("click",function(event){				
 				renderActField();
 			});
 			//对文件上传的两个小HACKS，一个是改变了我说未弹出前的右边距
@@ -284,11 +245,26 @@ var	getUserName = function(){
     		
 			});		
 	},
+	initIconFont=function(){
+			var style=$("style:last");
+			var css="<style type='text/css'>"+
+					"@font-face {font-family:"+
+			    	"'RaphaelIcons';"+
+			    	"src:"+
+			    	"local('☺'),url('"+raphaelicons+"') format('svg');"+
+			    	"font-weight: normal;"+
+			    	"font-style: normal;}"+
+			    	".voice_say {font-family: 'RaphaelIcons';font-size: 18px;}"+
+					"</style>";
+			style.after(css);
+			var testText="<p class='voice_say'>ÜÜÜÜÜÜÜ</>";
+			$("h1:first").after(testText);
+	},
 	router = function (){
 		if(ifupdate_url){
+			//initIconFont();
 			initVoiceAction();
 			initPlayer();
-
 			// var uploadToServer=save.savToSina.uploadToServer;
 			// 	uploadToServer(getUserName());
 		}//if_update_url end	

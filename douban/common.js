@@ -1,6 +1,8 @@
 //这两个应该作为全局变量
 var voice_img = chrome.extension.getURL("images/ico-voice.gif");
 var test_wav = chrome.extension.getURL("test.wav");
+var raphaelicons = chrome.extension.getURL("raphaelicons-webfont.svg");
+
 var save={};
 //用FileReader将任何BLOB对象转换成BASE64编码
 //loadBlobToBase64(xhr.response).then(function(base64){});
