@@ -106,30 +106,21 @@ var	getUserName = function(){
 			}//end of if of reverse_clock 
 	},
 	renderActField=function(){
-		var field="<div class='field'>";
-		var bd="<div class='bd'>";		
-		var cancel_btn="<a href='javascript:void(0);' class='bn-x isay-cancel'>×</a>";
-		var input="<input type='text' id='isay-inp-url'"+ 
-	     		   "value='http://www.baidu.com' class='url' name='url'"+ 
-	     		   "autocomplete='off' goog_input_chext='chext'>";
-		var span_btn="<span class='bn-flat'>"+
-						"<input type='button' value='录音'"+
-						"class='bn-record'></span>";
-		var test="<input type='file' accept='audio/*;capture=microphone'>";
-		var end_div="</div>";
-		var result="<span id='voice-result'></span>";
-		var name="<span id='voice-name'><p><div></div></p></span>​";
-		var final_html=field+
-						  bd+
-		                    result+
-		                    name+
-		                   // test+
-		                   cancel_btn+
+		var field="<div class='field'>",
+			bd="<div class='bd'>",		
+			cancel_btn="<a href='javascript:void(0);' class='bn-x isay-cancel'>×</a>",
+			span_btn="<span class='bn-flat'>"+
+							"<input type='button' value='录音'"+
+							"class='bn-record'></span>",
+			end_div="</div>",
+			result="<span id='voice-result'></span>",
+			name="<span id='voice-name'><p><div></div></p></span>​",
+			final_html=field+bd+
+							result+name+
+								cancel_btn+
 		                    span_btn+
-		                   end_div+
-		               end_div;
+		                   end_div+end_div;
 		$("#isay-act-field").html(final_html);
-		//$("#isay-act-field").show();
 		$("#isay-act-field .field").show();
 		//取消录音
 		$("#isay-act-field .isay-cancel").click(function(){
@@ -151,7 +142,20 @@ var	getUserName = function(){
 							//"id=audio_"+
 							//Statue.data_sid+
 							">";
-			dom.after(audio_tag);
+			dom.html(audio_tag);
+	},
+	getFileAgain=function(Statue,user_quote_obj){
+		var getFile=save.savToSina.getFile;
+		var setFile=save.savToSina.setFile;
+		setTimeout(function(){
+				console.log("3s !!!!");	
+				getFile(Statue.data_sid).then(function(base64){
+					renderPlayer(user_quote_obj,base64);
+					console.log("Ok....3s after");	
+				},function(){
+					console.log("3s after...fail again");						
+				});//end of 没有得到恰当的音频文件
+			},3000);
 	},
 	failLoadFile=function(Statue,user_quote_obj){
 		var getFile=save.savToSina.getFile;
@@ -165,20 +169,19 @@ var	getUserName = function(){
 			renderPlayer(user_quote_obj,temp_base64);
 			//不在远端，那么就开始上传吧
 			setFile(Statue.data_sid,temp_base64).then(function(returnID){
-					console.log(returnID);
+					console.log("setSucceed..."+returnID);
 			},function(){
 
 			});
+				//3秒钟之后再试一次
+				getFileAgain(Statue,user_quote_obj);
 		}else{
 			//等一段时间再刷新一下吧，或者也可以自动更新
 			var temp_base64=localStorage["VOICE_BUFFER"];
 			renderPlayer(user_quote_obj,temp_base64);
-			setTimeout(function(){
-				//隔3秒钟再试一次
-				getFile(Statue.data_sid).then(function(base64){
-					renderPlayer(user_quote_obj,base64);
-				});
-			},3000);
+				//3秒钟之后再试一次
+				 getFileAgain(Statue,user_quote_obj);
+			
 		}//end of 如果不是当前用户，又没抓到，来个setTimeOut先？
 	},
 	initPlayer=function(){
@@ -218,8 +221,6 @@ var	getUserName = function(){
 		});//end of each itor
 	},
 	initVoiceAction=function(){
-		//<a href="javascript:void(0);" tabindex="2" data-action="topic" 
-		//class="ico ico-topic" title="添加话题">话题</a>
 		var topic=$(".ico-topic");
 			topic.after("<a href='javascript:void(0);' tabindex='4'"+
 						"class='ico ico-voice' data-action='voice' "+
