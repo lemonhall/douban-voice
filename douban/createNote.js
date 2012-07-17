@@ -18,8 +18,6 @@ var urlParams = {};
 var url_slice=location.href.slice(0,33);
 var ifupdate_url=url_slice==="http://www.douban.com/note/create";
 
-//这是一个全局变量，用来防止用户多次重复按下录音按钮的一个小东西
-var reverse_clock=null;
 var	renderPlayer=function(dom,base64File){
 			var src=" src='"+base64File+"' ";
 			var audio_tag="<audio autoplay controls "+ 
@@ -80,7 +78,6 @@ var	renderPlayer=function(dom,base64File){
 		var temp_note_id=localStorage["temp_note_id"];
 		var new_note_url="http://www.douban.com/note/"+temp_note_id+"/";
 		if(location.href===new_note_url){
-			console.log("I am in temp~");
 			location.href="http://www.douban.com/update/";
 		}
 

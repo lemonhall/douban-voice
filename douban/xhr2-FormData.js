@@ -28,12 +28,12 @@
         return ___send$rw.call(this, data);
     };
 
-    var ___open$rw = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype['open'] = function() {
-        console.log(arguments);
-        // Invoke original XHR.open
-        return ___open$rw.apply(this, arguments);
-    };
+    // var ___open$rw = XMLHttpRequest.prototype.open;
+    // XMLHttpRequest.prototype['open'] = function() {
+    //     console.log(arguments);
+    //     // Invoke original XHR.open
+    //     return ___open$rw.apply(this, arguments);
+    // };
 
     function FormData() {
         var myself=this;

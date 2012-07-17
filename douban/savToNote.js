@@ -109,29 +109,27 @@ var savToNote = (function(){
 
 		return promise;
 	},
-	__redirectToNote=function(){
-		location.href="http://www.douban.com/note/create/?voice=true";
+	__redirectToNote=function(wavLocalStorageID){
+		location.href="http://www.douban.com/note/create/?voice=true"+"&id="+wavLocalStorageID;
 	}
 //公共接口
 return {
 	//向外暴露的公共方法，构造完成后，扫描DOUBAN UPDATE时调用这个函数
 	initView:function(){
 		__scanNewNote();
-		console.log("很开心");
-
 	},
 	//依靠日记来保存数据的原型
 	//这应该是向外暴露的公共方法
-	uploadToServer:function(){
+	uploadToServer:function(wavLocalStorageID){
 		//将WAV数据存入LOCAL_STORAGE，或者WEBSQL，成为缓存数据
 		//redirectTo createNote.js
-		__redirectToNote();
+		__redirectToNote(wavLocalStorageID);
 	}
 };
 })();
 
 // 将模块注册到WINDOWS对象上去
-	if(!window.savToNote)
-		window.savToNote = savToNote;
+	if(!save.savToNote)
+		save.savToNote = savToNote;
 
 })();

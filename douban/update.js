@@ -147,12 +147,11 @@ var	getUserName = function(){
 		});
 		//录音	
 		$("#isay-act-field .bn-record").click(function(){
-						doRecord();
+				doRecord();
 		});
 		//上传	
 		$("#isay-act-field .bn-upload").click(function(){
-						//renderUploader();
-						redirectToNote();
+				renderUploader();
 		});	
 				
 	},
@@ -315,18 +314,10 @@ var	getUserName = function(){
 	},
 	router = function (){
 		if(ifupdate_url){
-			var saveToNote=true;
-			var saveToImgServer=false;
-				initVoiceAction();
-				initPlayer();
-			//特性开关
-			if(saveToNote===true){
-				console.log(savToNote);
-				savToNote.initView();
-				//scanNewNote();
-				//testDeletePostInterFace();
-				//testFormDataInterFace();
-			}	
+			initVoiceAction();
+			initPlayer();
+			//testUploadIsay();
+			
 
 		}//if_update_url end	
 	}
