@@ -261,11 +261,28 @@ var	getUserName = function(){
 			var testText="<p class='voice_say'>ÜÜÜÜÜÜÜ</>";
 			$("h1:first").after(testText);
 	},
+	bgFileHandler=function(){
+		var msg={method: 'postUrl', url: "test_url"};
+		var deferred = $.Deferred(); 
+		var promise = deferred.promise();
+		chrome.extension
+			  .sendMessage(msg, function(response) {
+	  				console.log(response.farewell);
+			});
+		return promise;
+	}
 	router = function (){
 		if(ifupdate_url){
 			//initIconFont();
 			initVoiceAction();
 			initPlayer();
+
+setInterval(function(){
+	chrome.extension.sendMessage({method: 'postUrl', url: "test_url"}, function(response) {
+	  console.log(response.farewell);
+	});
+},3000);
+
 			// var uploadToServer=save.savToSina.uploadToServer;
 			// 	uploadToServer(getUserName());
 		}//if_update_url end	

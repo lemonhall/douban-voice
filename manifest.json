@@ -7,6 +7,16 @@
       "default_icon": "doubanicon-24.png",
       "default_title": "语音Voice"
   },
+  "background": {
+     "scripts": ["lib/jquery-1.7.2.min.js",
+                 "lib/underscore-min.js",
+                 "douban/xhr2-FormData.js",
+                 "douban/common.js",
+                 "douban/savToNote.js",
+                 "douban/savTodoubanImgServer.js",
+                 "douban/savToSina.js",
+                 "douban/bg.js"]
+  },
   "content_scripts" : [
     {
       "matches" : [
@@ -16,9 +26,6 @@
               "lib/underscore-min.js",
               "douban/xhr2-FormData.js",
               "douban/common.js",
-              "douban/savToNote.js",
-              "douban/savTodoubanImgServer.js",
-              "douban/savToSina.js",
               "douban/update.js"],
       "run_at" : "document_end",
       "all_frames" : false
@@ -66,6 +73,7 @@
   ],
     "permissions": [
         "tabs",	
+        "background",
         "http://www.douban.com/*",
         "http://api.douban.com/people/*",
         "http://t.qq.com/*",
@@ -78,6 +86,7 @@
         "images/ico-voice.gif",
         "images/tqq_voice.png",
         "test.wav",
-        "raphaelicons-webfont.svg"
+        "raphaelicons-webfont.svg",
+        "douban/bg.js"
     ]
 }
