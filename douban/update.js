@@ -49,8 +49,7 @@ var	getUserName = function(){
 					.then(function(xhr){
 				loadBlobToBase64(xhr.response)
 					.then(function(base64){
-        				var saveToLocal=save.savToSina.saveToLocal;
-			    		saveToLocal(base64);
+			    		localStorage["VOICE_BUFFER"]=base64;
 			    		renderIsayTextArea();
 			    	});
 				});
@@ -145,21 +144,21 @@ var	getUserName = function(){
 			dom.html(audio_tag);
 	},
 	getFileAgain=function(Statue,user_quote_obj){
-		var getFile=save.savToSina.getFile;
-		var setFile=save.savToSina.setFile;
-		setTimeout(function(){
-				console.log("3s !!!!");	
-				getFile(Statue.data_sid).then(function(base64){
-					renderPlayer(user_quote_obj,base64);
-					console.log("Ok....3s after");	
-				},function(){
-					console.log("3s after...fail again");						
-				});//end of 没有得到恰当的音频文件
-			},3000);
+	setTimeout(function(){
+		console.log("3s !!!!");
+		var msg={method:"getFile",id:Statue.data_sid};
+		bgFileHandler(msg).then(function(response){
+			if (response.file) {
+				renderPlayer(user_quote_obj,response.file);
+				console.log("Ok....3s after");
+			};
+			if(response.error){
+				console.log("3s after...fail again");
+			}
+		});
+	},3000);
 	},
 	failLoadFile=function(Statue,user_quote_obj){
-		var getFile=save.savToSina.getFile;
-		var setFile=save.savToSina.setFile;
 		//得改成有BACKGROUND来上传
 		var cur_usr=getUserName();
 		if(Statue.user_uid===cur_usr){
@@ -168,11 +167,19 @@ var	getUserName = function(){
 			localStorage["VOICE_BUFFER_ID"]=Statue.data_sid;				
 			renderPlayer(user_quote_obj,temp_base64);
 			//不在远端，那么就开始上传吧
-			setFile(Statue.data_sid,temp_base64).then(function(returnID){
-					console.log("setSucceed..."+returnID);
-			},function(){
+			var msg={method:"setFile",
+					id:Statue.data_sid,
+					file:temp_base64};
+			bgFileHandler(msg).then(function(response){
+				if (response.returnID) {
+					renderPlayer(user_quote_obj,response.file);
+				};
+			});			
+			// setFile(Statue.data_sid,temp_base64).then(function(returnID){
+			// 		console.log("setSucceed..."+returnID);
+			// },function(){
 
-			});
+			// });
 				//3秒钟之后再试一次
 				getFileAgain(Statue,user_quote_obj);
 		}else{
@@ -203,17 +210,21 @@ var	getUserName = function(){
 		if(ifPlayer){
 			console.log("ifPlayer holder?"+ifPlayer);
 			var user_quote_obj=myself.find("div.bd blockquote p");
-			//使用了SINA的这个类的接口
-			var getFile=save.savToSina.getFile;
-			var setFile=save.savToSina.setFile;
-			//不能这么快就渲染，得加一个延时的逻辑
-			//等待上传以及等待某用户上传完成...这大概需要个3秒钟左右吧？
-			//应该比较合适...3秒钟
-			getFile(Statue.data_sid).then(function(base64){
-				renderPlayer(user_quote_obj,base64);
-			},function(){
-				failLoadFile(Statue,user_quote_obj);							
-			});//end of 没有得到恰当的音频文件
+
+		var msg={method:"getFile",id:Statue.data_sid};
+		bgFileHandler(msg).then(function(response){
+				if (response.file) {
+					renderPlayer(user_quote_obj,response.file);
+				};
+				if(response.error){
+					failLoadFile(Statue,user_quote_obj);
+				}
+		});
+		// getFile(Statue.data_sid).then(function(base64){
+		// 	renderPlayer(user_quote_obj,base64);
+		// },function(){
+		// 	failLoadFile(Statue,user_quote_obj);							
+		// });//end of 没有得到恰当的音频文件
 				
 		}//end of ifplayer?
 	}//end of not user quote null
@@ -261,28 +272,21 @@ var	getUserName = function(){
 			var testText="<p class='voice_say'>ÜÜÜÜÜÜÜ</>";
 			$("h1:first").after(testText);
 	},
-	bgFileHandler=function(){
-		var msg={method: 'postUrl', url: "test_url"};
+	bgFileHandler=function(msg){
+		var msg=msg||{method: 'postUrl', url: "test_url"};
 		var deferred = $.Deferred(); 
 		var promise = deferred.promise();
 		chrome.extension
 			  .sendMessage(msg, function(response) {
-	  				console.log(response.farewell);
+			  		deferred.resolve(response);
 			});
 		return promise;
-	}
+	},
 	router = function (){
 		if(ifupdate_url){
 			//initIconFont();
 			initVoiceAction();
 			initPlayer();
-
-setInterval(function(){
-	chrome.extension.sendMessage({method: 'postUrl', url: "test_url"}, function(response) {
-	  console.log(response.farewell);
-	});
-},3000);
-
 			// var uploadToServer=save.savToSina.uploadToServer;
 			// 	uploadToServer(getUserName());
 		}//if_update_url end	

@@ -1,18 +1,7 @@
 (function () {	
 var savToSina = (function(){
 	//依靠自己的服务器来保存数据的原型
-var	__uploadToSinaServer=function(base64){
-		__setFile(base64).then(function(){
-				__UploadToIsay().then(function(){
-
-				},function(){
-
-				});
-		},function(){
-
-		});
-	},
-	__setSina=function(id,base64){
+var	__setSina=function(id,base64){
 		var id=id||"1234567";
 		var base64=base64||"base64";
 		var deferred = $.Deferred(); 
@@ -85,33 +74,6 @@ var	__uploadToSinaServer=function(base64){
 	    return promise;
 
 	},
-	__UploadToIsay=function(comments){
-		var comments='test'||comments;
-		var xhr = new XMLHttpRequest();
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-		var ck=$("input[name='ck']").attr("value");		
-		var fd = new FormData();
-
-			fd.append("ck",ck);
-			fd.append("comment","test");
-
-		xhr.onerror = function(e) {
-			deferred.reject(xhr, e);
-        }
-
-	    xhr.onload = function(e) {
-	        if (xhr.status == 200) {
-	            deferred.resolve(xhr);
-	        }
-	    };
-
-		xhr.open('POST', 'http://www.douban.com/update/', true);
-	    xhr.send(fd);
-
-	    return promise;
-
-	},
 	__setFile=function(id,base64){
 		var id=id||"voice_test_id";
 		var cacheExist=localStorage.hasOwnProperty(id);
@@ -167,7 +129,7 @@ var	__uploadToSinaServer=function(base64){
 		var cacheExist=localStorage.hasOwnProperty(id);
 		var deferred = $.Deferred(); 
 		var promise = deferred.promise();
-		console.log("cacheExist?"+cacheExist);
+		console.log("id:"+ id + "_cacheExist?"+cacheExist);
 			if(cacheExist){
 				__getFromCache(id).then(function(base64){
 					deferred.resolve(base64);
@@ -190,28 +152,6 @@ var	__uploadToSinaServer=function(base64){
 				});
 				
 			}
-		return promise;
-	},
-	__getLastID=function(user){
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-		//得到所有的ACTIONS，然后过滤掉那些没有转播的，就得到了自己的我说
-		//然后从自己的我说中取有特殊标记的第一个，如果没有...恭喜你，取消上传
-		var user_url_out="http://www.douban.com/people/"+user+"/";
-		var user_url=$("div.bd p.text a[href=\""+user_url_out+"\"]:first");
-		//.attr("data-sid");
-		var data_sid=user_url.parent()
-							 .parent().parent()
-							 .parent().attr("data-sid");
-				//如果得到了SID，搞定，返回
-				if(data_sid){
-						localStorage["VOICE_BUFFER_ID"]=data_sid;
-						deferred.resolve(data_sid);
-				}
-				else{
-						var e="Not found!";
-						deferred.reject(e);
-				}
 		return promise;
 	},
 	__saveToVOICE_BUFFER=function(base64){

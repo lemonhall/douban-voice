@@ -12,8 +12,6 @@
                  "lib/underscore-min.js",
                  "douban/xhr2-FormData.js",
                  "douban/common.js",
-                 "douban/savToNote.js",
-                 "douban/savTodoubanImgServer.js",
                  "douban/savToSina.js",
                  "douban/bg.js"]
   },
