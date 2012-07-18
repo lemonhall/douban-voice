@@ -7,10 +7,12 @@
       "default_icon": "doubanicon-24.png",
       "default_title": "语音Voice"
   },
+  "icons": { "16": "icon-voice-16.png",
+           "48": "icon-voice-48.png",
+          "128": "icon-voice-128.png" },
   "background": {
      "scripts": ["lib/jquery-1.7.2.min.js",
                  "lib/underscore-min.js",
-                 "douban/xhr2-FormData.js",
                  "douban/common.js",
                  "douban/savToSina.js",
                  "douban/bg.js"]
@@ -21,8 +23,6 @@
         "http://www.douban.com/update/*"
       ],
       "js" : ["lib/jquery-1.7.2.min.js",
-              "lib/underscore-min.js",
-              "douban/xhr2-FormData.js",
               "douban/common.js",
               "douban/update.js"],
       "run_at" : "document_end",
@@ -84,7 +84,6 @@
         "images/ico-voice.gif",
         "images/tqq_voice.png",
         "test.wav",
-        "raphaelicons-webfont.svg",
-        "douban/bg.js"
+        "raphaelicons-webfont.svg"
     ]
 }

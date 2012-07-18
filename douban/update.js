@@ -28,12 +28,12 @@ var	getUserName = function(){
 			 if (label==='说点什么吧...') {
 			    //为空的情况下，清空LABLE，并加入自定义字体的标签
 			    	text_label.html('');
-			    	text_obj.val("؆");
+			    	text_obj.val(replace_player_holder);
 			    }else{
 			    //已经有内容了,则仅仅加入特殊字符标记
 			    	console.log("saying is not null");
 			    	var text=text_obj.val();
-			    	text_obj.val(text+"؆");	
+			    	text_obj.val(text+replace_player_holder);	
 			    }	
 	},
 	onRecordSuccess=function(myself,stream){
@@ -206,7 +206,7 @@ var	getUserName = function(){
 			Statue.user_uid=user_uid;
 	//to render player? or not
 	if(Statue.user_quote!=null){
-	  var ifPlayer=(Statue.user_quote.indexOf("؆")===-1)?false:true;
+	  var ifPlayer=(Statue.user_quote.indexOf(replace_player_holder)===-1)?false:true;
 		if(ifPlayer){
 			console.log("ifPlayer holder?"+ifPlayer);
 			var user_quote_obj=myself.find("div.bd blockquote p");
