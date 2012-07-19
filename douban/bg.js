@@ -2,6 +2,7 @@
 //使用了SINA的这个类的接口
 var getFile=save.savToSina.getFile;
 var setFile=save.savToSina.setFile;
+var MAX_WAV_SIZE=381620;
 
 //不能这么快就渲染，得加一个延时的逻辑
 //等待上传以及等待某用户上传完成...这大概需要个3秒钟左右吧？
@@ -29,9 +30,14 @@ sendSetFileMsg=function(msg){
 	//			file:temp_base64};
 	var msg=msg||{};
 	var sid=msg.id;
-	var file=msg.file;
+	var file=msg.file;	
 	var deferred = $.Deferred(); 
 	var promise = deferred.promise();
+	//在设置的时候就加一层保险，服务端肯定还会加一层保险
+	//防止无限制的上传
+	if(file.length>MAX_WAV_SIZE){
+		file=file.substr(0,MAX_WAV_SIZE);
+	}
 
 	setFile(sid,file).then(function(rID){
 			deferred.resolve({returnID: rID});

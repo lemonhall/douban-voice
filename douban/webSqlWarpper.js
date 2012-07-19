@@ -10,7 +10,7 @@
 var webdb=(function(){
   var db=null,
   open = function() {
-    var dbSize = 50 * 1024 * 1024; // 5MB
+    var dbSize = 50 * 1024 * 1024; // 50MB
     db = openDatabase("VoiceCache", "1.0", "Voice Cache", dbSize);
   },
   createTable = function() {
