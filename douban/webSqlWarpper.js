@@ -27,10 +27,9 @@ var webdb=(function(){
                     "WHERE sid=?"
         ,[sid],
         function(tx, r){
-              console.log("out of range?????===========")
-              console.log(r);
-          if(r.rowsAffected){
-              var result=r.rows.item(0);
+              //console.log("out of range?????===========")
+              //console.log(r);
+          if(r.rows.length){
                   deferred.resolve(true);
           }else{
                 deferred.reject("no sid");
@@ -73,7 +72,8 @@ var webdb=(function(){
                     "WHERE sid=?"
         ,[sid],
         function(tx, r){
-            if(r.rowsAffected){
+          //console.log(r);
+            if(r.rows.length){
                 var result=r.rows.item(0);
                     deferred.resolve(result.base64);
             }else{
@@ -81,7 +81,7 @@ var webdb=(function(){
             }             
         },
         function(tx, e){
-                  console.log(e);
+                  //console.log(e);
                   deferred.reject(e);
         }
           );//END OF executeSql

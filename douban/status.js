@@ -7,7 +7,19 @@
 							//"id=audio_"+
 							//Statue.data_sid+
 							">";
-			dom.html(audio_tag);
+			//$("div.mod[data-status-id='971768591'] div.bd blockquote p")
+			//orgin_html.find("p").html()
+			var orgin_audio=dom.find("audio");
+				orgin_audio.remove();
+			var org_txt=dom.html();
+			var	txt="";
+			//防御式编程....
+			if(org_txt){
+				txt=org_txt.replace(replace_player_holder,"");
+			}
+			//var orgin_audio=$("<p>"+audio_tag+"</p>").find("audio");
+			//	orgin_audio.remove();
+			dom.html(txt+audio_tag);
 	},
 	getFileAgain=function(Statue,user_quote_obj){
 	setTimeout(function(){
@@ -28,15 +40,11 @@
 	$("div.mod").each(function(){
 	//优化了一下，尽力少扫描些信息
 	var myself=$(this);
-		var data_sid=myself.attr("data-status-id");
-		var user_url=myself.find("div.hd a:first").attr("href");	
+		var data_sid=myself.attr("data-status-id");	
 		var user_quote=myself.find("div.bd blockquote p").html();
-		var user_uid=user_url.slice(29,-1);
 		var Statue={};
 			Statue.data_sid=data_sid;
-			Statue.user_url=user_url;
 			Statue.user_quote=user_quote;
-			Statue.user_uid=user_uid;
 	//to render player? or not
 	if(Statue.user_quote!=null){
 	  var ifPlayer=(Statue.user_quote.indexOf(replace_player_holder)===-1)?false:true;
