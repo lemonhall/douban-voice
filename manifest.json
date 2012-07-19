@@ -72,6 +72,7 @@
     "permissions": [
         "tabs",	
         "background",
+        "unlimitedStorage",
         "http://www.douban.com/*",
         "http://api.douban.com/people/*",
         "http://t.qq.com/*",
