@@ -1,6 +1,10 @@
 (function () {	
 var savToSina = (function(){
 	//依靠自己的服务器来保存数据的原型
+var __saveToCache=VoiceCache.setCache;
+var __getFromCache=VoiceCache.getCache;
+var __ifExistIncache=VoiceCache.ifExistIncache;
+
 var	__setSina=function(id,base64){
 		var id=id||"1234567";
 		var base64=base64||"base64";
@@ -76,20 +80,19 @@ var	__setSina=function(id,base64){
 	},
 	__setFile=function(id,base64){
 		var id=id||"voice_test_id";
-		var cacheExist=localStorage.hasOwnProperty(id);
 		var base64=base64||"base64";
-
 		var deferred = $.Deferred(); 
 		var promise = deferred.promise();
-			if(cacheExist){
-				//DoNothing....
-				//这里有待解决，应该可以使用MD5或其他方式来防止重复提交
-					__saveToCache(id,base64).then(function(){
-						deferred.resolve(id);
-					},function(){
-						deferred.reject();
-					});
-			}else{
+
+		__ifExistIncache(id).then(function(cacheExist){
+			//DoNothing....
+			//这里有待解决，应该可以使用MD5或其他方式来防止重复提交
+				__saveToCache(id,base64).then(function(){
+					deferred.resolve(id);
+				},function(){
+					deferred.reject();
+				});
+		},function(e){
 				__setSina(id,base64).then(function(returnID){
 					__saveToCache(id,base64).then(function(){
 						deferred.resolve(returnID);
@@ -99,69 +102,39 @@ var	__setSina=function(id,base64){
 				},function(){
 						deferred.reject();
 				});
-			}
-		return promise;
-	},
-	__getFromCache=function(id){
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-		var file=null;
-
-			file=localStorage[id];
-			deferred.resolve(file);
-
-			//deferred.reject();
-
-
-		return promise;
-	},
-	__saveToCache=function(id,base64){
-		var deferred = $.Deferred(); 
-		var promise = deferred.promise();
-		var id=id||"voice_test_id";
-		var base64=base64||"base64";
-
-			localStorage[id]=base64;
-			deferred.resolve();
-			//deferred.reject();
-
+		});
 		return promise;
 	},
 	//传入id，得到文件
 	__getFile=function(id){
 		var id=id||"voice_test_id";
-		var cacheExist=localStorage.hasOwnProperty(id);
 		var deferred = $.Deferred(); 
 		var promise = deferred.promise();
+		
+		__ifExistIncache(id).then(function(cacheExist){
 		console.log("id:"+ id + "_cacheExist?"+cacheExist);
-			if(cacheExist){
-				__getFromCache(id).then(function(base64){
-					deferred.resolve(base64);
+			__getFromCache(id).then(function(base64){
+				deferred.resolve(base64);
+			},function(){
+				deferred.reject();
+			});
+		},function(e){
+		//=====================================
+			__getSina(id).then(function(base64File1){
+				//console.log("__getSina(id)_id?"+id);
+				//console.log("__getSina(id)_base64File1?"+base64File1);
+				__saveToCache(id,base64File1).then(function(){
+					//console.log("__saveToCache(id)id?"+id);
+					deferred.resolve(base64File1);
 				},function(){
 					deferred.reject();
 				});
-			//=====================================
-			}else{
-				__getSina(id).then(function(base64File1){
-					//console.log("__getSina(id)_id?"+id);
-					//console.log("__getSina(id)_base64File1?"+base64File1);
-					__saveToCache(id,base64File1).then(function(){
-						//console.log("__saveToCache(id)id?"+id);
-						deferred.resolve(base64File1);
-					},function(){
-						deferred.reject();
-					});
-				},function(){					
-					deferred.reject();
-				});
-				
-			}
+			},function(){					
+				deferred.reject();
+			});
+		});
+			
 		return promise;
-	},
-	__saveToVOICE_BUFFER=function(base64){
-			var base64=base64||"base64";
-			localStorage["VOICE_BUFFER"]=base64;
-			localStorage["VOICE_BUFFER_ID"]="";
 	}
 
 //公共接口
@@ -174,9 +147,6 @@ return {
 	// });
 	getFile:function(id){
 		return __getFile(id);
-	},
-	saveToLocal:function(base64){
-		__saveToVOICE_BUFFER(base64);
 	},
 	setFile:function(id,base64){
 		return __setFile(id,base64);

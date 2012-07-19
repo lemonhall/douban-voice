@@ -6,54 +6,80 @@
  * License: MIT License
  */
 (function(){
-var webdb=(function(){
-  var myself=this;
 
-  var open = function() {
+var webdb=(function(){
+  var db=null,
+  open = function() {
     var dbSize = 50 * 1024 * 1024; // 5MB
-    myself.db = openDatabase("VoiceCache", "1.0", "Voice Cache", dbSize);
+    db = openDatabase("VoiceCache", "1.0", "Voice Cache", dbSize);
   },
   createTable = function() {
-    var db = myself.db;
         db.transaction(function(tx) {
-          tx.executeSql("CREATE TABLE IF NOT EXISTS VoiceCache(ID INTEGER PRIMARY KEY ASC,sid TEXT, base64 TEXT)", []);
+          tx.executeSql("CREATE TABLE IF NOT EXISTS VoiceCache(sid TEXT PRIMARY KEY ASC, base64 TEXT)", []);
         });
   },
+  __ifExistIncache=function(sid){
+    var deferred = $.Deferred(); 
+    var promise = deferred.promise();
+
+    db.transaction(function(tx){
+      tx.executeSql("SELECT base64 FROM VoiceCache "+
+                    "WHERE sid=?"
+        ,[sid],
+        function(tx, r){
+              var result=r.rows.item(0);
+              if (result.base64) {
+                deferred.resolve(true);
+              }else{
+                deferred.reject(false);
+              }                
+        },
+        function(tx, e){
+                  deferred.reject(false);
+        }
+          );//END OF executeSql
+     });//END OF transaction
+
+    return promise;
+
+  },
   setFile = function(sid,base64) {
-  var db = myself.db;
   var deferred = $.Deferred(); 
   var promise = deferred.promise();
     db.transaction(function(tx){
-    tx.executeSql("INSERT INTO VoiceCache(sid,base64) VALUES (?,?)",
+    tx.executeSql("INSERT OR REPLACE INTO VoiceCache(sid,base64) VALUES (?,?)",
           [sid,base64],
-          (function(tx, r){
-                  var result=rs.rows.item(0);
-                  deferred.resolve(tx);
-          }),
-          (function(tx, e){
-                  deferred.reject();
-          })
+          function(tx, r){
+                  //var result=rs.rows.item(0);
+                  deferred.resolve(r);
+          },
+          function(tx, e){
+                  deferred.reject(e);
+          }
           );//END OF executeSql
      });//END OF transaction
 
     return promise;
   },
   getFile = function(sid) {
-    var db = myself.db;
     var deferred = $.Deferred(); 
     var promise = deferred.promise();
 
     db.transaction(function(tx){
-      tx.executeSql("SELECT base64 FROM VoiceCache"+
+      tx.executeSql("SELECT base64 FROM VoiceCache "+
                     "WHERE sid=?"
-        , [sid],
-          (function(tx, r){
-                  var result=rs.rows.item(0);
-                  deferred.resolve(tx);
-          }),
-          (function(tx, e){
-                  deferred.reject();
-          })
+        ,[sid],
+        function(tx, r){
+              var result=r.rows.item(0);
+              if (result.base64) {
+                deferred.resolve(result.base64);
+              }else{
+                deferred.reject(result);
+              }                
+        },
+        function(tx, e){
+                  deferred.reject(e);
+        }
           );//END OF executeSql
      });//END OF transaction
 
@@ -62,12 +88,15 @@ var webdb=(function(){
 
     return {
       init: function(){
-          myself.db = null;
-          myself.open();
-          myself.createTable();
+          db = null;
+          open();
+          createTable();
       },
       getCache: function(sid){
           return getFile(sid);
+      },
+      ifExistIncache:function(sid){
+          return  __ifExistIncache(sid);
       },
       setCache: function(sid,base64){
           return setFile(sid,base64);
@@ -76,7 +105,7 @@ var webdb=(function(){
   })();
 
   // register webdb at VoiceCache object
-  if(!VoiceCache){
+  if(VoiceCache){
     VoiceCache = webdb;
   }
   // and initialize it

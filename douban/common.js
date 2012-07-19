@@ -5,6 +5,7 @@ var raphaelicons = chrome.extension.getURL("raphaelicons-webfont.svg");
 var replace_player_holder="བློ";
 
 var save={};
+var VoiceCache={};
 
 
 //用FileReader将任何BLOB对象转换成BASE64编码

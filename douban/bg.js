@@ -66,25 +66,11 @@ chrome.extension.onMessage.addListener(
     	},function(e){
     			sendResponse(e);
     	});      
-    }
-    if (request.method == "setLocalStorage"){
-    	var id=request.id;
-    	var value=request.value;
-		localStorage[id]=value;
-    	sendResponse(1);
-	}
-	if (request.method == "getLocalStorage"){
-		var id=request.id;
-		var temp_base64=localStorage[id];
-    	sendResponse(temp_base64);
-	}        
+    }      
     if (request.method == "heartBeat"){
     	sendResponse(1);
 	}
-	if (request.method == "testLocalStorage"){
-		var temp_base64=localStorage["VOICE_BUFFER"];
-    	sendResponse(temp_base64);
-	}
+
 	return true;     		
 });
 })();
