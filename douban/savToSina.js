@@ -119,6 +119,7 @@ var	__setSina=function(id,base64){
 				deferred.reject();
 			});
 		},function(e){
+		console.log("id:"+ id + "_cacheExist? "+e);
 		//=====================================
 			__getSina(id).then(function(base64File1){
 				//console.log("__getSina(id)_id?"+id);

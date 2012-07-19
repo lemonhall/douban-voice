@@ -23,19 +23,22 @@ var webdb=(function(){
     var promise = deferred.promise();
 
     db.transaction(function(tx){
-      tx.executeSql("SELECT base64 FROM VoiceCache "+
+      tx.executeSql("SELECT sid FROM VoiceCache "+
                     "WHERE sid=?"
         ,[sid],
         function(tx, r){
+              console.log("out of range?????===========")
+              console.log(r);
+          if(r.rowsAffected){
               var result=r.rows.item(0);
-              if (result.base64) {
-                deferred.resolve(true);
-              }else{
-                deferred.reject(false);
-              }                
+                  deferred.resolve(true);
+          }else{
+                deferred.reject("no sid");
+          }                
         },
         function(tx, e){
-                  deferred.reject(false);
+                  console.log(e);
+                  deferred.reject(e);
         }
           );//END OF executeSql
      });//END OF transaction
@@ -70,14 +73,15 @@ var webdb=(function(){
                     "WHERE sid=?"
         ,[sid],
         function(tx, r){
-              var result=r.rows.item(0);
-              if (result.base64) {
-                deferred.resolve(result.base64);
-              }else{
-                deferred.reject(result);
-              }                
+            if(r.rowsAffected){
+                var result=r.rows.item(0);
+                    deferred.resolve(result.base64);
+            }else{
+                  deferred.reject(r);
+            }             
         },
         function(tx, e){
+                  console.log(e);
                   deferred.reject(e);
         }
           );//END OF executeSql
