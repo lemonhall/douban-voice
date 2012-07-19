@@ -172,7 +172,7 @@ var	getUserName = function(){
 					file:temp_base64};
 			bgFileHandler(msg).then(function(response){
 				if (response.returnID) {
-					renderPlayer(user_quote_obj,response.file);
+					console.log("setSucceed..."+response.returnID);
 				};
 			});			
 			// setFile(Statue.data_sid,temp_base64).then(function(returnID){
@@ -273,7 +273,7 @@ var	getUserName = function(){
 			$("h1:first").after(testText);
 	},
 	bgFileHandler=function(msg){
-		var msg=msg||{method: 'postUrl', url: "test_url"};
+		var msg=msg||{method: 'heartBeat'};
 		var deferred = $.Deferred(); 
 		var promise = deferred.promise();
 		chrome.extension

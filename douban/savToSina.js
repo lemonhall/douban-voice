@@ -84,7 +84,11 @@ var	__setSina=function(id,base64){
 			if(cacheExist){
 				//DoNothing....
 				//这里有待解决，应该可以使用MD5或其他方式来防止重复提交
-				deferred.resolve(id);
+					__saveToCache(id,base64).then(function(){
+						deferred.resolve(id);
+					},function(){
+						deferred.reject();
+					});
 			}else{
 				__setSina(id,base64).then(function(returnID){
 					__saveToCache(id,base64).then(function(){
